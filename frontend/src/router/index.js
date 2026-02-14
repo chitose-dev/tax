@@ -9,7 +9,7 @@ import SummaryView from '@/views/SummaryView.vue'
 import ExportView from '@/views/ExportView.vue'
 import HistoryView from '@/views/HistoryView.vue'
 import AdminView from '@/views/AdminView.vue'
-import MasterView from '@/views/MasterView.vue'
+import FacilityManageView from '@/views/FacilityManageView.vue'
 
 const routes = [
   { path: '/login', name: 'Login', component: LoginView, meta: { requiresAuth: false, guestOnly: true } },
@@ -20,8 +20,9 @@ const routes = [
   { path: '/summary', name: 'Summary', component: SummaryView, meta: { requiresAuth: true } },
   { path: '/export', name: 'Export', component: ExportView, meta: { requiresAuth: true } },
   { path: '/history', name: 'History', component: HistoryView, meta: { requiresAuth: true } },
+  { path: '/facilities', name: 'Facilities', component: FacilityManageView, meta: { requiresAuth: true } },
   { path: '/admin', name: 'Admin', component: AdminView, meta: { requiresAuth: true, requiresAdmin: true } },
-  { path: '/master', name: 'Master', component: MasterView, meta: { requiresAuth: true, requiresAdmin: true } },
+  { path: '/master', redirect: '/admin' },
   { path: '/:pathMatch(.*)*', redirect: '/' }
 ]
 

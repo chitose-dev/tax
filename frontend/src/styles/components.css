@@ -97,3 +97,14 @@
 .text-right { text-align: right; }
 .text-sm { font-size: 13px; }
 .text-gray { color: var(--color-gray-500); }
+
+/* Table scroll wrapper */
+.table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .modal { width: 95%; max-width: none; max-height: 90vh; }
+  .card-header { flex-wrap: wrap; gap: 8px; }
+  .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .tab { white-space: nowrap; }
+}

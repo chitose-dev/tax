@@ -1,10 +1,12 @@
 <script setup>
+import { inject } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRoute } from 'vue-router'
 import { computed } from 'vue'
 
 const authStore = useAuthStore()
 const route = useRoute()
+const sidebarOpen = inject('sidebarOpen')
 
 const navItems = computed(() => {
   const items = [
@@ -13,11 +15,11 @@ const navItems = computed(() => {
     { to: '/summary', label: '集計', icon: '≡' },
     { to: '/export', label: 'CSV出力', icon: '↓' },
     { to: '/history', label: '履歴', icon: '◷' },
+    { to: '/facilities', label: '施設・部屋管理', icon: '⌂' },
   ]
   if (authStore.isAdmin) {
     items.push(
-      { to: '/master', label: 'マスター管理', icon: '⚙' },
-      { to: '/admin', label: 'ユーザー管理', icon: '☰' },
+      { to: '/admin', label: '管理者設定', icon: '⚙' },
     )
   }
   return items
@@ -27,13 +29,20 @@ function isActive(to) {
   if (to === '/') return route.path === '/'
   return route.path.startsWith(to)
 }
+
+function closeSidebar() {
+  sidebarOpen.value = false
+}
 </script>
 
 <template>
-  <nav class="sidebar">
+  <!-- Mobile overlay backdrop -->
+  <div v-if="sidebarOpen" class="sidebar-overlay" @click="closeSidebar"></div>
+
+  <nav :class="['sidebar', { 'sidebar-open': sidebarOpen }]">
     <ul class="sidebar-nav">
       <li v-for="item in navItems" :key="item.to">
-        <router-link :to="item.to" :class="['sidebar-link', { active: isActive(item.to) }]">
+        <router-link :to="item.to" :class="['sidebar-link', { active: isActive(item.to) }]" @click="closeSidebar">
           <span class="sidebar-icon">{{ item.icon }}</span>
           {{ item.label }}
         </router-link>
@@ -64,4 +73,30 @@ function isActive(to) {
 .sidebar-link:hover { background: var(--color-gray-50); color: var(--color-gray-800); text-decoration: none; }
 .sidebar-link.active { background: var(--color-primary-light); color: var(--color-primary); }
 .sidebar-icon { font-size: 16px; width: 20px; text-align: center; }
+
+.sidebar-overlay { display: none; }
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    bottom: 0;
+    z-index: 100;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: var(--shadow-lg);
+  }
+  .sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    top: var(--header-height);
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 99;
+  }
+}
 </style>
