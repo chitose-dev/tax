@@ -1,9 +1,13 @@
 <script setup>
+import { ref, provide } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import AppHeader from '@/components/common/AppHeader.vue'
 import AppSidebar from '@/components/common/AppSidebar.vue'
 
 const authStore = useAuthStore()
+
+const sidebarOpen = ref(false)
+provide('sidebarOpen', sidebarOpen)
 </script>
 
 <template>
@@ -23,4 +27,8 @@ const authStore = useAuthStore()
 .app-layout { display: flex; flex-direction: column; height: 100vh; }
 .app-body { display: flex; flex: 1; overflow: hidden; }
 .app-main { flex: 1; overflow-y: auto; padding: 24px 32px; }
+
+@media (max-width: 768px) {
+  .app-main { padding: 16px; }
+}
 </style>
