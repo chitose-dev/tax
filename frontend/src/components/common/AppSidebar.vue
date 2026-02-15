@@ -17,9 +17,15 @@ const navItems = computed(() => {
     { to: '/history', label: '履歴', icon: '◷' },
     { to: '/facilities', label: '施設・部屋管理', icon: '⌂' },
   ]
+  if (!authStore.isAdmin) {
+    items.push(
+      { to: '/client-settings', label: '事業者設定', icon: '✎' },
+    )
+  }
   if (authStore.isAdmin) {
     items.push(
-      { to: '/admin', label: '管理者設定', icon: '⚙' },
+      { to: '/admin/clients', label: '事業者管理', icon: '⚙', separator: true },
+      { to: '/admin/accounts', label: 'アカウント管理', icon: '☰' },
     )
   }
   return items
@@ -41,7 +47,7 @@ function closeSidebar() {
 
   <nav :class="['sidebar', { 'sidebar-open': sidebarOpen }]">
     <ul class="sidebar-nav">
-      <li v-for="item in navItems" :key="item.to">
+      <li v-for="item in navItems" :key="item.to" :class="{ 'nav-separator': item.separator }">
         <router-link :to="item.to" :class="['sidebar-link', { active: isActive(item.to) }]" @click="closeSidebar">
           <span class="sidebar-icon">{{ item.icon }}</span>
           {{ item.label }}
@@ -61,6 +67,7 @@ function closeSidebar() {
 }
 .sidebar-nav { list-style: none; padding: 12px 8px; }
 .sidebar-nav li { margin-bottom: 2px; }
+.sidebar-nav li.nav-separator { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--color-gray-200); }
 .sidebar-link {
   display: flex; align-items: center; gap: 10px;
   padding: 10px 14px;
