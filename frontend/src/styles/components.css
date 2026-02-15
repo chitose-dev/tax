@@ -101,10 +101,33 @@
 /* Table scroll wrapper */
 .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
-/* Responsive */
+/* Responsive: tablet */
+@media (max-width: 1024px) {
+  .page-header h1 { font-size: 20px; }
+}
+
+/* Responsive: mobile */
 @media (max-width: 768px) {
   .modal { width: 95%; max-width: none; max-height: 90vh; }
   .card-header { flex-wrap: wrap; gap: 8px; }
+  .card-header h2 { font-size: 14px; }
+  .card-body { padding: 12px; }
   .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .tab { white-space: nowrap; }
+  .tab { white-space: nowrap; padding: 8px 14px; font-size: 13px; }
+  .page-header h1 { font-size: 18px; }
+  .page-header p { font-size: 13px; }
+  .page-header { margin-bottom: 16px; }
+  .btn-primary, .btn-secondary, .btn-danger { padding: 6px 14px; font-size: 13px; }
+  .form-group label { font-size: 12px; }
+  .form-group input, .form-group select, .form-group textarea { font-size: 16px; }
+  .modal { padding: 16px; }
+  .modal h3 { font-size: 16px; margin-bottom: 14px; }
+  .modal-actions { margin-top: 16px; padding-top: 12px; }
+}
+
+/* Responsive: small phone */
+@media (max-width: 480px) {
+  .modal-actions { flex-direction: column; }
+  .modal-actions .btn-primary,
+  .modal-actions .btn-secondary { width: 100%; justify-content: center; }
 }
