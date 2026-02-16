@@ -287,29 +287,33 @@ function reset() {
 
           <div v-if="previewResult.facilityBreakdown.length > 0">
             <h3 style="font-size:14px;font-weight:600;margin-bottom:8px">施設別内訳</h3>
-            <table>
-              <thead><tr><th>施設名</th><th>件数</th></tr></thead>
-              <tbody>
-                <tr v-for="fb in previewResult.facilityBreakdown" :key="fb.facilityId">
-                  <td>{{ fb.facilityName }}</td>
-                  <td>{{ fb.count }}件</td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="table-wrapper">
+              <table>
+                <thead><tr><th>施設名</th><th>件数</th></tr></thead>
+                <tbody>
+                  <tr v-for="fb in previewResult.facilityBreakdown" :key="fb.facilityId">
+                    <td>{{ fb.facilityName }}</td>
+                    <td>{{ fb.count }}件</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div v-if="previewResult.errors.length > 0" style="margin-top:16px">
             <h3 style="font-size:14px;font-weight:600;margin-bottom:8px;color:var(--color-danger)">エラー一覧</h3>
-            <table>
-              <thead><tr><th>行</th><th>部屋コード</th><th>エラー</th></tr></thead>
-              <tbody>
-                <tr v-for="(err, i) in previewResult.errors.slice(0, 20)" :key="i">
-                  <td>{{ err.row }}</td>
-                  <td>{{ err.value }}</td>
-                  <td class="text-sm">{{ err.message }}</td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="table-wrapper">
+              <table>
+                <thead><tr><th>行</th><th>部屋コード</th><th>エラー</th></tr></thead>
+                <tbody>
+                  <tr v-for="(err, i) in previewResult.errors.slice(0, 20)" :key="i">
+                    <td>{{ err.row }}</td>
+                    <td>{{ err.value }}</td>
+                    <td class="text-sm">{{ err.message }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
             <p v-if="previewResult.errors.length > 20" class="text-sm text-gray mt-2">
               ...他 {{ previewResult.errors.length - 20 }}件のエラー
             </p>

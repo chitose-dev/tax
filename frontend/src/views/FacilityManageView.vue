@@ -121,7 +121,7 @@ function getFacilityName(facilityId) {
                 <td>{{ f.facilityName }}</td>
                 <td><code style="background:var(--color-gray-100);padding:2px 6px;border-radius:4px">{{ f.roomCodePrefix }}</code></td>
                 <td><span :class="['badge', f.isActive ? 'badge-success' : 'badge-error']">{{ f.isActive ? '有効' : '無効' }}</span></td>
-                <td style="text-align:right">
+                <td style="text-align:right;white-space:nowrap">
                   <button class="btn-secondary btn-sm" @click="openFacilityForm(f)" style="margin-right:4px">編集</button>
                   <button class="btn-danger btn-sm" @click="deleteFacility(f)">削除</button>
                 </td>
@@ -152,7 +152,7 @@ function getFacilityName(facilityId) {
                 <td>{{ r.roomName }}</td>
                 <td>{{ r.capacity || '-' }}</td>
                 <td><span :class="['badge', r.isActive ? 'badge-success' : 'badge-error']">{{ r.isActive ? '有効' : '無効' }}</span></td>
-                <td style="text-align:right">
+                <td style="text-align:right;white-space:nowrap">
                   <button class="btn-secondary btn-sm" @click="openRoomForm(r)" style="margin-right:4px">編集</button>
                   <button class="btn-danger btn-sm" @click="deleteRoom(r)">削除</button>
                 </td>

@@ -52,7 +52,7 @@ function deleteClient(client) {
                 <td>{{ c.representativeName || '-' }}</td>
                 <td>{{ c.phone || '-' }}</td>
                 <td><span :class="['badge', c.isActive ? 'badge-success' : 'badge-error']">{{ c.isActive ? '有効' : '無効' }}</span></td>
-                <td style="text-align:right">
+                <td style="text-align:right;white-space:nowrap">
                   <button class="btn-secondary btn-sm" @click="openClientForm(c)" style="margin-right:4px">編集</button>
                   <button class="btn-danger btn-sm" @click="deleteClient(c)">削除</button>
                 </td>

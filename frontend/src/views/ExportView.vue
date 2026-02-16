@@ -87,6 +87,7 @@ function downloadCSV(summary) {
     <div class="card">
       <div class="card-header"><h2>出力可能な集計</h2></div>
       <div class="card-body" style="padding:0">
+        <div class="table-wrapper">
         <table v-if="confirmedSummaries.length > 0">
           <thead>
             <tr>
@@ -107,7 +108,7 @@ function downloadCSV(summary) {
               <td>{{ s.taxablePersonNights?.toLocaleString() }}</td>
               <td style="font-weight:600">&yen;{{ s.taxAmount?.toLocaleString() }}</td>
               <td><span :class="['badge', 'badge-' + s.status]">{{ s.status === 'exported' ? '出力済' : '確定' }}</span></td>
-              <td style="text-align:right">
+              <td style="text-align:right;white-space:nowrap">
                 <button class="btn-primary btn-sm" @click="downloadCSV(s)">
                   {{ s.status === 'exported' ? '再ダウンロード' : 'CSV出力' }}
                 </button>
@@ -116,6 +117,7 @@ function downloadCSV(summary) {
           </tbody>
         </table>
         <div v-else class="empty-state"><p>確定済みの集計がありません。集計画面で確定してください。</p></div>
+        </div>
       </div>
     </div>
   </div>
