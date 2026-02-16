@@ -63,7 +63,7 @@ function deleteUser(user) {
                 <td><span :class="['badge', u.role === 'admin' ? 'badge-confirmed' : 'badge-draft']">{{ u.role === 'admin' ? '管理者' : '一般' }}</span></td>
                 <td class="text-sm">{{ getClientName(u.clientId) }}</td>
                 <td><span :class="['badge', u.isActive ? 'badge-success' : 'badge-error']">{{ u.isActive ? '有効' : '無効' }}</span></td>
-                <td style="text-align:right">
+                <td style="text-align:right;white-space:nowrap">
                   <button class="btn-danger btn-sm" @click="deleteUser(u)">削除</button>
                 </td>
               </tr>

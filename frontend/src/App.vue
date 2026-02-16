@@ -26,7 +26,7 @@ provide('sidebarOpen', sidebarOpen)
 <style>
 .app-layout { display: flex; flex-direction: column; height: 100vh; }
 .app-body { display: flex; flex: 1; overflow: hidden; }
-.app-main { flex: 1; overflow-y: auto; padding: 24px 32px; }
+.app-main { flex: 1; overflow-y: auto; overflow-x: hidden; min-width: 0; padding: 24px 32px; }
 
 @media (max-width: 768px) {
   .app-main { padding: 16px; }
