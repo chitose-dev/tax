@@ -70,5 +70,11 @@ async function handleLogout() {
 @media (max-width: 768px) {
   .hamburger-btn { display: flex; }
   .header-user { display: none; }
+  .header-title { font-size: 14px; }
+  .header { padding: 0 12px; }
+}
+@media (max-width: 480px) {
+  .header-title { font-size: 13px; }
+  .header-right .badge { display: none; }
 }
 </style>

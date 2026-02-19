@@ -164,6 +164,7 @@ function confirmSummary(item) {
         <h2>集計結果 - {{ selectedYearMonth }}{{ periodType === 'quarterly' ? '（3か月）' : '' }}</h2>
       </div>
       <div class="card-body" style="padding:0">
+        <div class="table-wrapper">
         <table>
           <thead>
             <tr>
@@ -187,7 +188,7 @@ function confirmSummary(item) {
                 </span>
                 <span v-else class="text-sm text-gray">未保存</span>
               </td>
-              <td style="text-align:right">
+              <td style="text-align:right;white-space:nowrap">
                 <button v-if="!item.status" class="btn-secondary btn-sm" @click="saveSummary(item)">保存</button>
                 <button v-else-if="item.status === 'draft'" class="btn-primary btn-sm" @click="confirmSummary(item)">確定</button>
                 <span v-else class="text-sm text-gray">確定済</span>
@@ -202,6 +203,7 @@ function confirmSummary(item) {
             </tr>
           </tbody>
         </table>
+        </div>
       </div>
     </div>
 

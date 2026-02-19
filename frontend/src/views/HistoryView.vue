@@ -58,41 +58,45 @@ function formatDate(d) {
     <!-- インポート履歴 -->
     <div v-if="activeTab === 'import'" class="card">
       <div class="card-body" style="padding:0">
-        <table v-if="importHistory.length > 0">
-          <thead>
-            <tr><th>日時</th><th>ファイル名</th><th>施設</th><th>成功/全体</th><th>状態</th></tr>
-          </thead>
-          <tbody>
-            <tr v-for="log in importHistory" :key="log.id">
-              <td class="text-sm">{{ formatDate(log.createdAt) }}</td>
-              <td>{{ log.fileName }}</td>
-              <td class="text-sm">{{ getFacilityNames(log.facilityIds || []) }}</td>
-              <td>{{ log.successRows }} / {{ log.totalRows }}</td>
-              <td><span :class="['badge', 'badge-' + log.status]">{{ log.status }}</span></td>
-            </tr>
-          </tbody>
-        </table>
-        <div v-else class="empty-state"><p>インポート履歴がありません</p></div>
+        <div class="table-wrapper">
+          <table v-if="importHistory.length > 0">
+            <thead>
+              <tr><th>日時</th><th>ファイル名</th><th>施設</th><th>成功/全体</th><th>状態</th></tr>
+            </thead>
+            <tbody>
+              <tr v-for="log in importHistory" :key="log.id">
+                <td class="text-sm">{{ formatDate(log.createdAt) }}</td>
+                <td>{{ log.fileName }}</td>
+                <td class="text-sm">{{ getFacilityNames(log.facilityIds || []) }}</td>
+                <td>{{ log.successRows }} / {{ log.totalRows }}</td>
+                <td><span :class="['badge', 'badge-' + log.status]">{{ log.status }}</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <div v-else class="empty-state"><p>インポート履歴がありません</p></div>
+        </div>
       </div>
     </div>
 
     <!-- エクスポート履歴 -->
     <div v-if="activeTab === 'export'" class="card">
       <div class="card-body" style="padding:0">
-        <table v-if="exportHistory.length > 0">
-          <thead>
-            <tr><th>日時</th><th>ファイル名</th><th>期間</th><th>税額</th></tr>
-          </thead>
-          <tbody>
-            <tr v-for="log in exportHistory" :key="log.id">
-              <td class="text-sm">{{ formatDate(log.createdAt) }}</td>
-              <td>{{ log.fileName }}</td>
-              <td>{{ log.periodStart }} 〜 {{ log.periodEnd }}</td>
-              <td>&yen;{{ log.taxAmount?.toLocaleString() }}</td>
-            </tr>
-          </tbody>
-        </table>
-        <div v-else class="empty-state"><p>エクスポート履歴がありません</p></div>
+        <div class="table-wrapper">
+          <table v-if="exportHistory.length > 0">
+            <thead>
+              <tr><th>日時</th><th>ファイル名</th><th>期間</th><th>税額</th></tr>
+            </thead>
+            <tbody>
+              <tr v-for="log in exportHistory" :key="log.id">
+                <td class="text-sm">{{ formatDate(log.createdAt) }}</td>
+                <td>{{ log.fileName }}</td>
+                <td>{{ log.periodStart }} 〜 {{ log.periodEnd }}</td>
+                <td>&yen;{{ log.taxAmount?.toLocaleString() }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div v-else class="empty-state"><p>エクスポート履歴がありません</p></div>
+        </div>
       </div>
     </div>
   </div>
