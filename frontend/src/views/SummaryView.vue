@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useImportStore } from '@/stores/import'
 import { useSummaryStore } from '@/stores/summary'
@@ -33,6 +33,13 @@ watch(selectedClientId, async (id) => {
   if (id) {
     selectedYearMonth.value = ''
     await importStore.fetchLodgingRecords(id)
+  }
+})
+
+// ページ表示時にも必ずフェッチ（インポート後の遷移対応）
+onMounted(async () => {
+  if (selectedClientId.value) {
+    await importStore.fetchLodgingRecords(selectedClientId.value)
   }
 })
 
