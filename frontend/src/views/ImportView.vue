@@ -72,7 +72,7 @@ async function handleFile(file) {
     const result = await parseFile(file)
     parsedHeaders.value = result.headers
     parsedRows.value = result.rows
-    importStore.setParsedData(result.headers, result.rows, file.name)
+    importStore.setParsedData(result.headers, result.rows, file.name, file)
     autoDetectMapping(result.headers)
     step.value = 2
   } catch (e) {
