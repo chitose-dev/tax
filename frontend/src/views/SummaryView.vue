@@ -12,7 +12,7 @@ const masterStore = useMasterStore()
 
 const TAX_RATE = 200
 
-const selectedClientId = ref(authStore.clientId || masterStore.clients[0]?.id || '')
+const selectedClientId = ref(authStore.clientId || '')
 const selectedFacilityId = ref('')
 const selectedYearMonth = ref('')
 const periodType = ref('monthly')
@@ -21,13 +21,20 @@ const clientFacilities = computed(() =>
   masterStore.facilities.filter(f => f.clientId === selectedClientId.value && f.isActive)
 )
 
+// clientsがロードされたらデフォルト選択
+watch(() => masterStore.clients, (clients) => {
+  if (!selectedClientId.value && clients.length > 0) {
+    selectedClientId.value = clients[0].id
+  }
+}, { immediate: true })
+
 // clientId変更時に宿泊レコードをフェッチ
 watch(selectedClientId, async (id) => {
   if (id) {
     selectedYearMonth.value = ''
     await importStore.fetchLodgingRecords(id)
   }
-}, { immediate: true })
+})
 
 // 利用可能な年月一覧
 const availableMonths = computed(() => {
