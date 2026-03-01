@@ -7,8 +7,9 @@ const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 
-const email = ref('admin@example.com')
-const password = ref('password')
+const useMock = import.meta.env.VITE_USE_MOCK === 'true'
+const email = ref(useMock ? 'admin@example.com' : '')
+const password = ref('')
 const errors = ref({})
 const loginError = ref('')
 const isLoading = ref(false)
@@ -37,7 +38,7 @@ async function handleLogin() {
   <div class="login-container">
     <div class="login-card">
       <h1 class="login-title">宿泊税計算システム</h1>
-      <div class="alert alert-info" style="margin-top:12px;font-size:12px">
+      <div v-if="useMock" class="alert alert-info" style="margin-top:12px;font-size:12px">
         モック: admin@example.com で管理者、それ以外で一般ユーザーとしてログイン（パスワードは何でもOK）
       </div>
       <form @submit.prevent="handleLogin" class="login-form">
