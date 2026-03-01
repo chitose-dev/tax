@@ -1,0 +1,6 @@
+facilityId,roomCode,checkInDate,checkOutDate,adults,children,infants
+facility-1,AB101,2026-01-10,2026-01-12,2,0,0
+facility-1,AB102,2026-01-11,2026-01-13,2,1,1
+facility-2,CD101,2026-01-15,2026-01-16,1,0,0
+facility-1,AB201,2026-02-01,2026-02-03,3,1,0
+facility-3,EF101,2026-01-20,2026-01-22,2,0,1
