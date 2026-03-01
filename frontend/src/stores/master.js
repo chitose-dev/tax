@@ -15,6 +15,10 @@ export const useMasterStore = defineStore('master', () => {
       clients.value = [...mockClients]
       facilities.value = [...mockFacilities]
       rooms.value = [...mockRooms]
+    } else {
+      await fetchClients()
+      await fetchFacilities()
+      await fetchRooms()
     }
   }
 
@@ -85,9 +89,13 @@ export const useMasterStore = defineStore('master', () => {
     isLoading.value = true
     try {
       const { api } = await import('@/lib/api')
-      const data = await api.get('/facilities', { clientId })
-      // Merge: replace facilities for this client
-      facilities.value = facilities.value.filter(f => f.clientId !== clientId).concat(data)
+      const params = clientId ? { clientId } : {}
+      const data = await api.get('/facilities', params)
+      if (clientId) {
+        facilities.value = facilities.value.filter(f => f.clientId !== clientId).concat(data)
+      } else {
+        facilities.value = data
+      }
     } finally { isLoading.value = false }
   }
 
@@ -144,8 +152,13 @@ export const useMasterStore = defineStore('master', () => {
     isLoading.value = true
     try {
       const { api } = await import('@/lib/api')
-      const data = await api.get('/rooms', { facilityId })
-      rooms.value = rooms.value.filter(r => r.facilityId !== facilityId).concat(data)
+      const params = facilityId ? { facilityId } : {}
+      const data = await api.get('/rooms', params)
+      if (facilityId) {
+        rooms.value = rooms.value.filter(r => r.facilityId !== facilityId).concat(data)
+      } else {
+        rooms.value = data
+      }
     } finally { isLoading.value = false }
   }
 
