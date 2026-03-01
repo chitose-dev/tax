@@ -89,7 +89,7 @@ const calculatedSummaries = computed(() => {
     // 既存の集計状態を確認
     const existing = summaryStore.summaries.find(
       s => s.clientId === selectedClientId.value && s.facilityId === facility.id &&
-           s.yearMonth === selectedYearMonth.value && s.periodType === periodType.value
+           s.yearMonth === selectedYearMonth.value
     )
 
     return {
@@ -111,8 +111,8 @@ const grandTotal = computed(() => ({
   taxAmount: calculatedSummaries.value.reduce((s, c) => s + c.taxAmount, 0),
 }))
 
-function saveSummary(item) {
-  summaryStore.saveSummary({
+async function saveSummary(item) {
+  await summaryStore.saveSummary({
     clientId: selectedClientId.value,
     facilityId: item.facilityId,
     periodType: periodType.value,
