@@ -86,7 +86,6 @@ export const useImportStore = defineStore('import', () => {
       const formData = new FormData()
       formData.append('file', rawFile.value)
       formData.append('clientId', clientId)
-      formData.append('columnMapping', JSON.stringify(columnMapping.value))
 
       const result = await api.upload('/lodging-records/import', formData)
       clearImportState()
