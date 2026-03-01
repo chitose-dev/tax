@@ -6,7 +6,7 @@ const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
   const userProfile = ref(null)
-  const isLoading = ref(false)
+  const isLoading = ref(!USE_MOCK)
   const error = ref(null)
 
   const isAuthenticated = computed(() => !!user.value)
