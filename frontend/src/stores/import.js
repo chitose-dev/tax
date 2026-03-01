@@ -102,6 +102,15 @@ export const useImportStore = defineStore('import', () => {
     rawFile.value = null
   }
 
+  async function fetchLodgingRecords(clientId) {
+    if (USE_MOCK) return
+    isLoading.value = true
+    try {
+      const { api } = await import('@/lib/api')
+      lodgingRecords.value = await api.get('/lodging-records', { clientId })
+    } finally { isLoading.value = false }
+  }
+
   async function getRecordsByFilter(clientId, facilityId, yearMonth) {
     if (USE_MOCK) {
       return lodgingRecords.value.filter(r => {
@@ -115,6 +124,7 @@ export const useImportStore = defineStore('import', () => {
     try {
       const { api } = await import('@/lib/api')
       const data = await api.get('/lodging-records', { clientId, facilityId, yearMonth })
+      lodgingRecords.value = data
       return data
     } finally { isLoading.value = false }
   }
@@ -149,7 +159,7 @@ export const useImportStore = defineStore('import', () => {
     lodgingRecords, importLogs, isLoading,
     parsedHeaders, parsedRows, columnMapping, mappedRecords, fileName, rawFile,
     setParsedData, setColumnMapping, setMappedRecords,
-    confirmImport, clearImportState, getRecordsByFilter,
+    confirmImport, clearImportState, fetchLodgingRecords, getRecordsByFilter,
     fetchImportLogs, rollbackImport
   }
 })

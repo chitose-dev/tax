@@ -21,6 +21,14 @@ const clientFacilities = computed(() =>
   masterStore.facilities.filter(f => f.clientId === selectedClientId.value && f.isActive)
 )
 
+// clientId変更時に宿泊レコードをフェッチ
+watch(selectedClientId, async (id) => {
+  if (id) {
+    selectedYearMonth.value = ''
+    await importStore.fetchLodgingRecords(id)
+  }
+}, { immediate: true })
+
 // 利用可能な年月一覧
 const availableMonths = computed(() => {
   const months = new Set()
