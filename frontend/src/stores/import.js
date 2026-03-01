@@ -85,9 +85,8 @@ export const useImportStore = defineStore('import', () => {
       const { api } = await import('@/lib/api')
       const formData = new FormData()
       formData.append('file', rawFile.value)
-      formData.append('clientId', clientId)
 
-      const result = await api.upload('/lodging-records/import', formData)
+      const result = await api.upload(`/lodging-records/import?clientId=${encodeURIComponent(clientId)}`, formData)
       clearImportState()
       return result.importLogId || result.id
     } finally { isLoading.value = false }
