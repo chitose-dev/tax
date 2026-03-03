@@ -38,11 +38,11 @@ const requiredFields = [
   { key: 'roomCode', label: 'リスティング（部屋コード）' },
   { key: 'checkInDate', label: 'チェックイン日' },
   { key: 'checkOutDate', label: 'チェックアウト日' },
-  { key: 'nights', label: '泊数' },
   { key: 'adults', label: '大人人数' },
   { key: 'children', label: '子供人数' },
 ]
 const optionalFields = [
+  { key: 'nights', label: '泊数' },
   { key: 'infants', label: '乳幼児人数' },
   { key: 'amount', label: '宿泊料金' },
 ]
