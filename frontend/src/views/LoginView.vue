@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter, useRoute } from 'vue-router'
 
@@ -24,8 +24,9 @@ async function handleLogin() {
   isLoading.value = true
   try {
     await authStore.login(email.value, password.value)
+    await nextTick()
     const redirect = route.query.redirect || '/'
-    router.replace(redirect)
+    await router.replace(redirect)
   } catch (e) {
     loginError.value = authStore.error || 'ログインに失敗しました'
   } finally {
