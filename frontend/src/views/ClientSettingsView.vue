@@ -32,13 +32,23 @@ function startEdit() {
   editing.value = true
 }
 
-function saveSettings() {
+const saving = ref(false)
+
+async function saveSettings() {
   if (!form.value.clientName?.trim()) {
     alert('事業者名は必須です')
     return
   }
-  masterStore.updateClient(authStore.clientId, { ...form.value })
-  editing.value = false
+  saving.value = true
+  try {
+    await masterStore.updateClient(authStore.clientId, { ...form.value })
+    editing.value = false
+  } catch (e) {
+    console.error('保存エラー:', e)
+    alert('保存に失敗しました: ' + (e.message || '不明なエラー'))
+  } finally {
+    saving.value = false
+  }
 }
 
 function cancelEdit() {
@@ -113,7 +123,7 @@ function cancelEdit() {
             <div class="form-group"><label>メール</label><input v-model="form.email" type="email" maxlength="254" /></div>
             <div class="form-group"><label>備考</label><textarea v-model="form.notes" rows="2" maxlength="500"></textarea></div>
             <div class="flex gap-2" style="margin-top: 20px;">
-              <button type="submit" class="btn-primary">保存</button>
+              <button type="submit" class="btn-primary" :disabled="saving">{{ saving ? '保存中...' : '保存' }}</button>
               <button type="button" class="btn-secondary" @click="cancelEdit">キャンセル</button>
             </div>
           </form>
