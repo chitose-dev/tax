@@ -12,7 +12,7 @@ const myClient = computed(() => {
 
 const editing = ref(false)
 const form = ref({
-  clientCode: '', clientName: '', representativeName: '',
+  clientCode: '', clientName: '', representative: '',
   address: '', phone: '', email: '', notes: ''
 })
 
@@ -22,7 +22,7 @@ function startEdit() {
     form.value = {
       clientCode: c.clientCode || '',
       clientName: c.clientName || '',
-      representativeName: c.representativeName || '',
+      representative: c.representative || '',
       address: c.address || '',
       phone: c.phone || '',
       email: c.email || '',
@@ -86,7 +86,7 @@ function cancelEdit() {
             </div>
             <div class="detail-item">
               <div class="detail-label">代表者名</div>
-              <div class="detail-value">{{ myClient.representativeName || '未設定' }}</div>
+              <div class="detail-value">{{ myClient.representative || '未設定' }}</div>
             </div>
             <div class="detail-item">
               <div class="detail-label">住所</div>
@@ -117,7 +117,7 @@ function cancelEdit() {
           <form @submit.prevent="saveSettings">
             <div class="form-group"><label>事業者コード</label><input v-model="form.clientCode" maxlength="20" /></div>
             <div class="form-group"><label>事業者名 <span class="required">*</span></label><input v-model="form.clientName" required maxlength="100" /></div>
-            <div class="form-group"><label>代表者名</label><input v-model="form.representativeName" maxlength="50" /></div>
+            <div class="form-group"><label>代表者名</label><input v-model="form.representative" maxlength="50" /></div>
             <div class="form-group"><label>住所</label><input v-model="form.address" maxlength="200" /></div>
             <div class="form-group"><label>電話番号</label><input v-model="form.phone" type="tel" maxlength="15" /></div>
             <div class="form-group"><label>メール</label><input v-model="form.email" type="email" maxlength="254" /></div>

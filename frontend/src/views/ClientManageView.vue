@@ -49,7 +49,7 @@ function deleteClient(client) {
               <tr v-for="c in masterStore.clients" :key="c.id">
                 <td>{{ c.clientCode || '-' }}</td>
                 <td>{{ c.clientName }}</td>
-                <td>{{ c.representativeName || '-' }}</td>
+                <td>{{ c.representative || '-' }}</td>
                 <td>{{ c.phone || '-' }}</td>
                 <td><span :class="['badge', c.isActive ? 'badge-success' : 'badge-error']">{{ c.isActive ? '有効' : '無効' }}</span></td>
                 <td style="text-align:right;white-space:nowrap">
@@ -80,16 +80,16 @@ const ClientFormInline = {
   props: { client: Object },
   emits: ['save', 'close'],
   setup(props, { emit }) {
-    const form = ref({ clientCode: '', clientName: '', representativeName: '', address: '', phone: '', email: '', notes: '', isActive: true })
+    const form = ref({ clientCode: '', clientName: '', representative: '', address: '', phone: '', email: '', notes: '', isActive: true })
     onMounted(() => {
-      if (props.client) form.value = { clientCode: props.client.clientCode||'', clientName: props.client.clientName||'', representativeName: props.client.representativeName||'', address: props.client.address||'', phone: props.client.phone||'', email: props.client.email||'', notes: props.client.notes||'', isActive: props.client.isActive !== false }
+      if (props.client) form.value = { clientCode: props.client.clientCode||'', clientName: props.client.clientName||'', representative: props.client.representative||'', address: props.client.address||'', phone: props.client.phone||'', email: props.client.email||'', notes: props.client.notes||'', isActive: props.client.isActive !== false }
     })
     return { form, submit() { if (!form.value.clientName?.trim()) { alert('事業者名は必須です'); return } emit('save', { ...form.value }) } }
   },
   template: `<form @submit.prevent="submit">
     <div class="form-group"><label>事業者コード</label><input v-model="form.clientCode" maxlength="20" placeholder="後日設定可能" /></div>
     <div class="form-group"><label>事業者名 <span class="required">*</span></label><input v-model="form.clientName" required maxlength="100" /></div>
-    <div class="form-group"><label>代表者名</label><input v-model="form.representativeName" maxlength="50" /></div>
+    <div class="form-group"><label>代表者名</label><input v-model="form.representative" maxlength="50" /></div>
     <div class="form-group"><label>住所</label><input v-model="form.address" maxlength="200" /></div>
     <div class="form-group"><label>電話番号</label><input v-model="form.phone" type="tel" maxlength="15" /></div>
     <div class="form-group"><label>メール</label><input v-model="form.email" type="email" maxlength="254" /></div>
