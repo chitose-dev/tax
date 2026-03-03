@@ -1,11 +1,19 @@
 <script setup>
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter, useRoute } from 'vue-router'
 
 const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
+
+// 認証済みなら即リダイレクト
+watch(() => authStore.isAuthenticated, (authenticated) => {
+  if (authenticated) {
+    const redirect = route.query.redirect || '/'
+    router.replace(redirect)
+  }
+}, { immediate: true })
 
 const useMock = import.meta.env.VITE_USE_MOCK === 'true'
 const email = ref(useMock ? 'admin@example.com' : '')
@@ -36,7 +44,7 @@ async function handleLogin() {
 </script>
 
 <template>
-  <div class="login-container">
+  <div v-if="!authStore.isAuthenticated" class="login-container">
     <div class="login-card">
       <h1 class="login-title">宿泊税計算システム</h1>
       <div v-if="useMock" class="alert alert-info" style="margin-top:12px;font-size:12px">
