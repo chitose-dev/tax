@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useImportStore } from '@/stores/import'
 import { useSummaryStore } from '@/stores/summary'
@@ -13,6 +13,18 @@ const masterStore = useMasterStore()
 const activeTab = ref('import')
 
 const selectedClientId = ref(authStore.clientId || masterStore.clients[0]?.id || '')
+
+onMounted(() => {
+  if (selectedClientId.value) {
+    importStore.fetchImportLogs(selectedClientId.value)
+  }
+})
+
+watch(selectedClientId, (id) => {
+  if (id) {
+    importStore.fetchImportLogs(id)
+  }
+})
 
 const importHistory = computed(() =>
   importStore.importLogs.filter(l => l.clientId === selectedClientId.value)

@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useImportStore } from '@/stores/import'
 import { useSummaryStore } from '@/stores/summary'
@@ -11,6 +11,10 @@ const summaryStore = useSummaryStore()
 const masterStore = useMasterStore()
 
 const clientId = computed(() => authStore.isAdmin ? null : authStore.clientId)
+
+onMounted(() => {
+  importStore.fetchImportLogs(clientId.value)
+})
 
 // 一般ユーザー用の統計
 const stats = computed(() => {
