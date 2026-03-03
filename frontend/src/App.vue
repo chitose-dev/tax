@@ -11,7 +11,10 @@ provide('sidebarOpen', sidebarOpen)
 </script>
 
 <template>
-  <div v-if="authStore.isAuthenticated" class="app-layout">
+  <div v-if="authStore.isLoading" class="loading-screen">
+    <p>読み込み中...</p>
+  </div>
+  <div v-else-if="authStore.isAuthenticated" class="app-layout">
     <AppHeader />
     <div class="app-body">
       <AppSidebar />
@@ -28,6 +31,7 @@ provide('sidebarOpen', sidebarOpen)
 .app-body { display: flex; flex: 1; overflow: hidden; }
 .app-main { flex: 1; overflow-y: auto; overflow-x: hidden; min-width: 0; padding: 24px 32px; }
 
+.loading-screen { display: flex; align-items: center; justify-content: center; height: 100vh; color: var(--color-gray-500); }
 @media (max-width: 768px) {
   .app-main { padding: 16px; }
 }

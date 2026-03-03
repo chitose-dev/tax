@@ -7,6 +7,13 @@ import './styles/reset.css'
 import './styles/components.css'
 
 const app = createApp(App)
-app.use(createPinia())
-app.use(router)
-app.mount('#app')
+const pinia = createPinia()
+app.use(pinia)
+
+// Initialize auth before mounting to prevent flash of wrong UI
+import { useAuthStore } from './stores/auth.js'
+const authStore = useAuthStore()
+authStore.initAuth().then(() => {
+  app.use(router)
+  app.mount('#app')
+})
