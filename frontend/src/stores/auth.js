@@ -44,7 +44,17 @@ export const useAuthStore = defineStore('auth', () => {
       const { api } = await import('@/lib/api')
       userProfile.value = await api.get('/auth/me')
     } catch (e) {
-      error.value = e.message || 'ログインに失敗しました'
+      const code = e.code || ''
+      const messages = {
+        'auth/invalid-credential': 'メールアドレスまたはパスワードが正しくありません',
+        'auth/invalid-email': 'メールアドレスの形式が正しくありません',
+        'auth/user-disabled': 'このアカウントは無効化されています',
+        'auth/user-not-found': 'このメールアドレスのアカウントが見つかりません',
+        'auth/wrong-password': 'パスワードが正しくありません',
+        'auth/too-many-requests': 'ログイン試行回数が多すぎます。しばらくしてから再度お試しください',
+        'auth/network-request-failed': 'ネットワークエラーが発生しました。接続を確認してください',
+      }
+      error.value = messages[code] || 'ログインに失敗しました'
       throw e
     } finally {
       isLoading.value = false
