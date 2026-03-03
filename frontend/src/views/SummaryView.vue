@@ -63,7 +63,6 @@ const calculatedSummaries = computed(() => {
   return facilities.map(facility => {
     let records
     if (periodType.value === 'quarterly') {
-      // 3か月分
       const [y, m] = selectedYearMonth.value.split('-').map(Number)
       const months = []
       for (let i = 0; i < 3; i++) {
@@ -76,14 +75,27 @@ const calculatedSummaries = computed(() => {
         r.clientId === selectedClientId.value && r.facilityId === facility.id && months.includes(r.yearMonth)
       )
     } else {
-      records = importStore.getRecordsByFilter(selectedClientId.value, facility.id, selectedYearMonth.value)
+      // computedの中ではasync不可 → 同期的にフィルタリング
+      records = importStore.lodgingRecords.filter(r =>
+        r.clientId === selectedClientId.value && r.facilityId === facility.id && r.yearMonth === selectedYearMonth.value
+      )
+    }
+
+    // nightsがない場合はcheckIn/checkOutから算出
+    function getNights(r) {
+      if (r.nights) return r.nights
+      if (r.checkInDate && r.checkOutDate) {
+        const diff = new Date(r.checkOutDate) - new Date(r.checkInDate)
+        return Math.max(1, Math.round(diff / 86400000))
+      }
+      return 1
     }
 
     const totalAdults = records.reduce((s, r) => s + (r.adults || 0), 0)
     const totalChildren = records.reduce((s, r) => s + (r.children || 0), 0)
     const totalInfants = records.reduce((s, r) => s + (r.infants || 0), 0)
-    const totalNights = records.reduce((s, r) => s + (r.nights || 0), 0)
-    const taxablePersonNights = records.reduce((s, r) => s + ((r.adults + r.children) * r.nights), 0)
+    const totalNights = records.reduce((s, r) => s + getNights(r), 0)
+    const taxablePersonNights = records.reduce((s, r) => s + ((r.adults || 0) + (r.children || 0)) * getNights(r), 0)
     const taxAmount = taxablePersonNights * TAX_RATE
 
     // 既存の集計状態を確認
