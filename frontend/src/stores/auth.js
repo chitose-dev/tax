@@ -8,11 +8,23 @@ export const useAuthStore = defineStore('auth', () => {
   const userProfile = ref(null)
   const isLoading = ref(!USE_MOCK)
   const error = ref(null)
+  let _initialized = false
+  let _unsubscribe = null
 
-  const isAuthenticated = computed(() => !!user.value)
+  const isAuthenticated = computed(() => !!user.value && !!userProfile.value)
   const isAdmin = computed(() => userProfile.value?.role === 'admin')
   const clientId = computed(() => userProfile.value?.clientId)
   const facilityIds = computed(() => userProfile.value?.facilityIds || [])
+
+  async function _fetchProfile() {
+    try {
+      const { api } = await import('@/lib/api')
+      userProfile.value = await api.get('/auth/me')
+    } catch {
+      user.value = null
+      userProfile.value = null
+    }
+  }
 
   async function login(email, password) {
     error.value = null
@@ -40,9 +52,7 @@ export const useAuthStore = defineStore('auth', () => {
       const { auth } = await import('@/lib/firebase')
       const credential = await signInWithEmailAndPassword(auth, email, password)
       user.value = credential.user
-
-      const { api } = await import('@/lib/api')
-      userProfile.value = await api.get('/auth/me')
+      await _fetchProfile()
     } catch (e) {
       const code = e.code || ''
       const messages = {
@@ -72,34 +82,56 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function initAuth() {
+    if (_initialized) return
+    _initialized = true
+
     if (USE_MOCK) {
       isLoading.value = false
       return
     }
 
     isLoading.value = true
-    const { onAuthStateChanged } = await import('firebase/auth')
-    const { auth } = await import('@/lib/firebase')
 
-    return new Promise((resolve) => {
-      onAuthStateChanged(auth, async (firebaseUser) => {
-        if (firebaseUser) {
-          user.value = firebaseUser
-          try {
-            const { api } = await import('@/lib/api')
-            userProfile.value = await api.get('/auth/me')
-          } catch {
+    try {
+      const { onAuthStateChanged } = await import('firebase/auth')
+      const { auth } = await import('@/lib/firebase')
+
+      await new Promise((resolve) => {
+        // Only use the first callback to resolve the initial state
+        const unsubscribeInitial = onAuthStateChanged(auth, async (firebaseUser) => {
+          // Unsubscribe from the initial listener immediately
+          unsubscribeInitial()
+
+          if (firebaseUser) {
+            user.value = firebaseUser
+            await _fetchProfile()
+          } else {
             user.value = null
             userProfile.value = null
+          }
+          isLoading.value = false
+          resolve()
+        })
+      })
+
+      // Set up a persistent listener for auth state changes (logout, token refresh)
+      _unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        if (firebaseUser) {
+          // Only refetch if user changed
+          if (!user.value || user.value.uid !== firebaseUser.uid) {
+            user.value = firebaseUser
+            await _fetchProfile()
           }
         } else {
           user.value = null
           userProfile.value = null
         }
-        isLoading.value = false
-        resolve()
       })
-    })
+    } catch (e) {
+      // Firebase initialization failed - show login screen
+      console.error('Auth initialization failed:', e)
+      isLoading.value = false
+    }
   }
 
   return {

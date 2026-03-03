@@ -10,10 +10,18 @@ const app = createApp(App)
 const pinia = createPinia()
 app.use(pinia)
 
-// Initialize auth before mounting to prevent flash of wrong UI
 import { useAuthStore } from './stores/auth.js'
 const authStore = useAuthStore()
-authStore.initAuth().then(() => {
+
+// Initialize auth with timeout to prevent infinite loading
+const authReady = authStore.initAuth()
+const timeout = new Promise(resolve => setTimeout(resolve, 5000))
+
+Promise.race([authReady, timeout]).then(() => {
+  if (authStore.isLoading) {
+    // Timeout hit - force loading to false
+    authStore.isLoading = false
+  }
   app.use(router)
   app.mount('#app')
 })
