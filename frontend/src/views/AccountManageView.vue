@@ -125,13 +125,16 @@ async function deleteUser(user) {
     errorMessage.value = '自分自身は削除できません'
     return
   }
-  if (!confirm(`「${user.displayName || user.email}」を削除しますか？\n\n同じメールアドレスで再作成する場合は、同じパスワードで再登録できます。`)) return
+  if (!confirm(`「${user.displayName || user.email}」を完全に削除しますか？\nFirebase AuthとFirestoreの両方から削除されます。`)) return
 
   try {
-    await deleteDoc(doc(db, 'users', user.id))
+    // バックエンドAPI経由で物理削除（Firebase Auth + Firestore両方）
+    const { api } = await import('@/lib/api')
+    await api.delete(`/users/${user.id}`)
     await fetchUsers()
   } catch (e) {
-    errorMessage.value = 'ユーザーの削除に失敗しました'
+    console.error('ユーザー削除エラー:', e)
+    errorMessage.value = 'ユーザーの削除に失敗しました: ' + (e.message || '不明なエラー')
   }
 }
 
