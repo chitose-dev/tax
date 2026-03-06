@@ -20,9 +20,13 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const { api } = await import('@/lib/api')
       userProfile.value = await api.get('/auth/me')
-    } catch {
+    } catch (e) {
       user.value = null
       userProfile.value = null
+      // プロフィールが未登録の場合のエラーメッセージ
+      if (e.status === 404 || e.status === 403) {
+        error.value = 'アカウントは存在しますが、ユーザープロフィールが未登録です。管理者にお問い合わせください。'
+      }
     }
   }
 

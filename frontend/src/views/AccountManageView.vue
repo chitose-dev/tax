@@ -4,7 +4,7 @@ import { useMasterStore } from '@/stores/master'
 import { useAuthStore } from '@/stores/auth'
 import { db, secondaryAuth } from '@/lib/firebase'
 import { collection, getDocs, doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
-import { createUserWithEmailAndPassword, signOut as secondarySignOut } from 'firebase/auth'
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as secondarySignOut } from 'firebase/auth'
 
 const masterStore = useMasterStore()
 const authStore = useAuthStore()
@@ -48,16 +48,40 @@ async function addUser() {
   errorMessage.value = ''
 
   try {
-    // セカンダリAuthでユーザー作成（メインのログインセッションに影響しない）
-    const credential = await createUserWithEmailAndPassword(
-      secondaryAuth, form.value.email, form.value.password
-    )
-    const uid = credential.user.uid
+    let uid
 
-    // セカンダリAuthからすぐサインアウト
-    await secondarySignOut(secondaryAuth)
+    try {
+      // セカンダリAuthでユーザー作成（メインのログインセッションに影響しない）
+      const credential = await createUserWithEmailAndPassword(
+        secondaryAuth, form.value.email, form.value.password
+      )
+      uid = credential.user.uid
+      await secondarySignOut(secondaryAuth)
+    } catch (createErr) {
+      if (createErr.code === 'auth/email-already-in-use') {
+        // Firebase Authにアカウントが残っている場合（削除後の再作成など）
+        // パスワードでサインインしてUIDを取得し、Firestoreプロフィールを再作成
+        try {
+          const credential = await signInWithEmailAndPassword(
+            secondaryAuth, form.value.email, form.value.password
+          )
+          uid = credential.user.uid
+          await secondarySignOut(secondaryAuth)
+        } catch (signInErr) {
+          if (signInErr.code === 'auth/wrong-password' || signInErr.code === 'auth/invalid-credential') {
+            errorMessage.value = 'このメールアドレスは既にFirebase Authに登録されていますが、パスワードが一致しません。同じパスワードを入力するか、Firebaseコンソールからアカウントを削除してください。'
+          } else {
+            errorMessage.value = `既存アカウントの復旧に失敗しました: ${signInErr.message}`
+          }
+          isSubmitting.value = false
+          return
+        }
+      } else {
+        throw createErr
+      }
+    }
 
-    // Firestoreにユーザープロフィール保存
+    // Firestoreにユーザープロフィール保存（新規 or 再作成）
     await setDoc(doc(db, 'users', uid), {
       email: form.value.email,
       displayName: form.value.displayName,
@@ -75,7 +99,6 @@ async function addUser() {
     form.value = { email: '', password: '', displayName: '', role: 'user', clientId: '' }
   } catch (e) {
     const messages = {
-      'auth/email-already-in-use': 'このメールアドレスは既に登録されています',
       'auth/invalid-email': 'メールアドレスの形式が正しくありません',
       'auth/weak-password': 'パスワードは6文字以上にしてください',
     }
@@ -102,7 +125,7 @@ async function deleteUser(user) {
     errorMessage.value = '自分自身は削除できません'
     return
   }
-  if (!confirm(`「${user.displayName || user.email}」を削除しますか？\n※ Firebase Authのアカウントは残ります（無効化をお勧めします）`)) return
+  if (!confirm(`「${user.displayName || user.email}」を削除しますか？\n\n同じメールアドレスで再作成する場合は、同じパスワードで再登録できます。`)) return
 
   try {
     await deleteDoc(doc(db, 'users', user.id))
