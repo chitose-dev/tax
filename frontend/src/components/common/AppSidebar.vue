@@ -24,8 +24,8 @@ const navItems = computed(() => {
   }
   if (authStore.isAdmin) {
     items.push(
-      { to: '/admin/clients', label: '事業者管理', icon: '⚙', separator: true },
-      { to: '/admin/accounts', label: 'アカウント管理', icon: '☰' },
+      { to: '/admin/clients', label: '事業者管理', icon: '♢', separator: true },
+      { to: '/admin/accounts', label: 'アカウント管理', icon: '⊞' },
     )
   }
   return items
