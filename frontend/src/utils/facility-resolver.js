@@ -1,8 +1,8 @@
 export function resolveFacilityByRoomCode(roomCode, facilities) {
-  if (!roomCode || roomCode.length < 2) {
-    return { success: false, error: `部屋コードが無効です（2文字以上必要）: "${roomCode}"` }
+  if (!roomCode || roomCode.length < 1) {
+    return { success: false, error: `部屋コードが無効です: "${roomCode}"` }
   }
-  const prefix = roomCode.substring(0, 2).toUpperCase()
+  const prefix = roomCode.substring(0, 1).toUpperCase()
   const matched = facilities.find(f => f.roomCodePrefix && f.roomCodePrefix.toUpperCase() === prefix)
   if (!matched) {
     return { success: false, error: `部屋コード「${roomCode}」に対応する施設が見つかりません（プレフィックス: ${prefix}）` }

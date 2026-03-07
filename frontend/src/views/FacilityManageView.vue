@@ -211,7 +211,7 @@ const FacilityFormInline = {
     return { form, submit() {
       if (!form.value.clientId) { alert('事業者を選択してください'); return }
       if (!form.value.facilityName?.trim()) { alert('施設名は必須です'); return }
-      if (!form.value.roomCodePrefix || form.value.roomCodePrefix.length !== 2) { alert('プレフィックスは2文字で入力してください'); return }
+      if (!form.value.roomCodePrefix || form.value.roomCodePrefix.length !== 1) { alert('プレフィックスは1文字で入力してください'); return }
       form.value.roomCodePrefix = form.value.roomCodePrefix.toUpperCase()
       emit('save', { ...form.value })
     }}
@@ -220,7 +220,7 @@ const FacilityFormInline = {
     <div class="form-group"><label>事業者 <span class="required">*</span></label><select v-model="form.clientId" required :disabled="!!facility || lockClient"><option value="">選択してください</option><option v-for="c in clients" :key="c.id" :value="c.id">{{c.clientName}}</option></select></div>
     <div class="form-group"><label>施設コード</label><input v-model="form.facilityCode" maxlength="20" placeholder="後日設定可能" /></div>
     <div class="form-group"><label>施設名 <span class="required">*</span></label><input v-model="form.facilityName" required maxlength="100" /></div>
-    <div class="form-group"><label>プレフィックス <span class="required">*</span><span class="hint">（2文字固定）</span></label><input v-model="form.roomCodePrefix" required maxlength="2" minlength="2" class="input-small" @input="form.roomCodePrefix = form.roomCodePrefix.toUpperCase()" /><p class="form-hint">CSVの部屋コード先頭2桁と照合して施設を自動識別します</p></div>
+    <div class="form-group"><label>プレフィックス <span class="required">*</span><span class="hint">（1文字固定）</span></label><input v-model="form.roomCodePrefix" required maxlength="1" minlength="1" class="input-small" @input="form.roomCodePrefix = form.roomCodePrefix.toUpperCase()" /><p class="form-hint">CSVの部屋コード先頭1桁と照合して施設を自動識別します（例: A→施設A, K→施設K）</p></div>
     <div class="form-group"><label>所在地</label><input v-model="form.address" maxlength="200" /></div>
     <div class="form-group"><label>電話</label><input v-model="form.phone" type="tel" maxlength="15" /></div>
     <div class="form-group"><label>収容人数</label><input v-model.number="form.capacity" type="number" min="1" class="input-small" /></div>
