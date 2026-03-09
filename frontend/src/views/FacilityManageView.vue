@@ -35,18 +35,32 @@ const editingFacility = ref(null)
 function openFacilityForm(facility = null) {
   editingFacility.value = facility
   showFacilityForm.value = true
+  formError.value = ''
 }
-function saveFacility(data) {
-  if (editingFacility.value) {
-    masterStore.updateFacility(editingFacility.value.id, data)
-  } else {
-    masterStore.addFacility(data)
+const formError = ref('')
+
+async function saveFacility(data) {
+  formError.value = ''
+  try {
+    if (editingFacility.value) {
+      await masterStore.updateFacility(editingFacility.value.id, data)
+    } else {
+      await masterStore.addFacility(data)
+    }
+    showFacilityForm.value = false
+    // 施設一覧を再取得して確実に反映
+    await masterStore.fetchFacilities(null, true)
+  } catch (e) {
+    formError.value = e.message || '施設の保存に失敗しました'
   }
-  showFacilityForm.value = false
 }
-function deleteFacility(facility) {
+async function deleteFacility(facility) {
   if (confirm(`「${facility.facilityName}」を削除しますか？`)) {
-    masterStore.deleteFacility(facility.id)
+    try {
+      await masterStore.deleteFacility(facility.id)
+    } catch (e) {
+      formError.value = e.message || '施設の削除に失敗しました'
+    }
   }
 }
 
@@ -57,18 +71,30 @@ const editingRoom = ref(null)
 function openRoomForm(room = null) {
   editingRoom.value = room
   showRoomForm.value = true
+  formError.value = ''
 }
-function saveRoom(data) {
-  if (editingRoom.value) {
-    masterStore.updateRoom(editingRoom.value.id, data)
-  } else {
-    masterStore.addRoom(data)
+async function saveRoom(data) {
+  formError.value = ''
+  try {
+    if (editingRoom.value) {
+      await masterStore.updateRoom(editingRoom.value.id, data)
+    } else {
+      await masterStore.addRoom(data)
+    }
+    showRoomForm.value = false
+    // 部屋一覧を再取得して確実に反映
+    await masterStore.fetchRooms(null, true)
+  } catch (e) {
+    formError.value = e.message || '部屋の保存に失敗しました'
   }
-  showRoomForm.value = false
 }
-function deleteRoom(room) {
+async function deleteRoom(room) {
   if (confirm(`「${room.roomName}」を削除しますか？`)) {
-    masterStore.deleteRoom(room.id)
+    try {
+      await masterStore.deleteRoom(room.id)
+    } catch (e) {
+      formError.value = e.message || '部屋の削除に失敗しました'
+    }
   }
 }
 
@@ -167,6 +193,7 @@ function getFacilityName(facilityId) {
     <div v-if="showFacilityForm" class="modal-overlay" @click.self="showFacilityForm = false">
       <div class="modal">
         <h3>{{ editingFacility ? '施設編集' : '新規施設登録' }}</h3>
+        <div v-if="formError" style="color: var(--danger-color, #e74c3c); margin-bottom: 12px; font-size: 0.9em; padding: 8px 12px; background: #fef2f2; border-radius: 6px">{{ formError }}</div>
         <FacilityFormInline
           :facility="editingFacility"
           :clients="authStore.isAdmin ? masterStore.clients : masterStore.clients.filter(c => c.id === authStore.clientId)"
@@ -182,6 +209,7 @@ function getFacilityName(facilityId) {
     <div v-if="showRoomForm" class="modal-overlay" @click.self="showRoomForm = false">
       <div class="modal">
         <h3>{{ editingRoom ? '部屋編集' : '新規部屋登録' }}</h3>
+        <div v-if="formError" style="color: var(--danger-color, #e74c3c); margin-bottom: 12px; font-size: 0.9em; padding: 8px 12px; background: #fef2f2; border-radius: 6px">{{ formError }}</div>
         <RoomFormInline
           :room="editingRoom"
           :facilities="filteredFacilities"
