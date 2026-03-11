@@ -135,7 +135,7 @@ async function deleteUser(user) {
     errorMessage.value = '自分自身は削除できません'
     return
   }
-  if (!confirm(`「${user.displayName || user.email}」を削除しますか？\nFirebase Authアカウントも完全に削除されます。`)) return
+  if (!confirm(`「${user.displayName || user.email}」を削除しますか？`)) return
 
   try {
     const { api } = await import('@/lib/api')

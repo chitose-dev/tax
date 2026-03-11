@@ -131,15 +131,15 @@ function getFacilityName(facilityId) {
     <div v-if="activeTab === 'facilities'" class="card">
       <div class="card-header">
         <h2>施設一覧</h2>
-        <button class="btn-primary btn-sm" @click="openFacilityForm()">+ 新規登録</button>
+        <button v-if="authStore.isAdmin" class="btn-primary btn-sm" @click="openFacilityForm()">+ 新規登録</button>
       </div>
       <div class="card-body" style="padding:0">
         <div class="table-wrapper">
           <table>
-            <thead><tr><th>事業者</th><th>コード</th><th>施設名</th><th>プレフィックス</th><th>状態</th><th></th></tr></thead>
+            <thead><tr><th>事業者</th><th>コード</th><th>施設名</th><th>プレフィックス</th><th>状態</th><th v-if="authStore.isAdmin"></th></tr></thead>
             <tbody>
               <tr v-if="filteredFacilities.length === 0">
-                <td colspan="6" class="empty-state">施設が登録されていません</td>
+                <td :colspan="authStore.isAdmin ? 6 : 5" class="empty-state">施設が登録されていません</td>
               </tr>
               <tr v-for="f in filteredFacilities" :key="f.id">
                 <td class="text-sm">{{ getClientName(f.clientId) }}</td>
@@ -147,7 +147,7 @@ function getFacilityName(facilityId) {
                 <td>{{ f.facilityName }}</td>
                 <td><code style="background:var(--color-gray-100);padding:2px 6px;border-radius:4px">{{ f.roomCodePrefix }}</code></td>
                 <td><span :class="['badge', f.isActive ? 'badge-success' : 'badge-error']">{{ f.isActive ? '有効' : '無効' }}</span></td>
-                <td style="text-align:right;white-space:nowrap">
+                <td v-if="authStore.isAdmin" style="text-align:right;white-space:nowrap">
                   <button class="btn-secondary btn-sm" @click="openFacilityForm(f)" style="margin-right:4px">編集</button>
                   <button class="btn-danger btn-sm" @click="deleteFacility(f)">削除</button>
                 </td>
@@ -162,15 +162,15 @@ function getFacilityName(facilityId) {
     <div v-if="activeTab === 'rooms'" class="card">
       <div class="card-header">
         <h2>部屋一覧</h2>
-        <button class="btn-primary btn-sm" @click="openRoomForm()">+ 新規登録</button>
+        <button v-if="authStore.isAdmin" class="btn-primary btn-sm" @click="openRoomForm()">+ 新規登録</button>
       </div>
       <div class="card-body" style="padding:0">
         <div class="table-wrapper">
           <table>
-            <thead><tr><th>施設</th><th>部屋コード</th><th>部屋名</th><th>定員</th><th>状態</th><th></th></tr></thead>
+            <thead><tr><th>施設</th><th>部屋コード</th><th>部屋名</th><th>定員</th><th>状態</th><th v-if="authStore.isAdmin"></th></tr></thead>
             <tbody>
               <tr v-if="filteredRooms.length === 0">
-                <td colspan="6" class="empty-state">部屋が登録されていません</td>
+                <td :colspan="authStore.isAdmin ? 6 : 5" class="empty-state">部屋が登録されていません</td>
               </tr>
               <tr v-for="r in filteredRooms" :key="r.id">
                 <td class="text-sm">{{ getFacilityName(r.facilityId) }}</td>
@@ -178,7 +178,7 @@ function getFacilityName(facilityId) {
                 <td>{{ r.roomName }}</td>
                 <td>{{ r.capacity || '-' }}</td>
                 <td><span :class="['badge', r.isActive ? 'badge-success' : 'badge-error']">{{ r.isActive ? '有効' : '無効' }}</span></td>
-                <td style="text-align:right;white-space:nowrap">
+                <td v-if="authStore.isAdmin" style="text-align:right;white-space:nowrap">
                   <button class="btn-secondary btn-sm" @click="openRoomForm(r)" style="margin-right:4px">編集</button>
                   <button class="btn-danger btn-sm" @click="deleteRoom(r)">削除</button>
                 </td>
