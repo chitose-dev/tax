@@ -241,13 +241,17 @@ const FacilityFormInline = {
       if (!form.value.facilityName?.trim()) { alert('施設名は必須です'); return }
       if (!form.value.roomCodePrefix || form.value.roomCodePrefix.length !== 1) { alert('プレフィックスは1文字で入力してください'); return }
       form.value.roomCodePrefix = form.value.roomCodePrefix.toUpperCase()
-      // null/undefinedのフィールドを除去（API 422防止）
-      const data = { clientId: form.value.clientId, facilityName: form.value.facilityName, roomCodePrefix: form.value.roomCodePrefix, isActive: form.value.isActive }
-      if (form.value.facilityCode?.trim()) data.facilityCode = form.value.facilityCode
+      // null/undefinedのオプショナルフィールドを除去（API 422防止）
+      const data = {
+        clientId: form.value.clientId,
+        facilityCode: form.value.facilityCode || '',
+        facilityName: form.value.facilityName,
+        roomCodePrefix: form.value.roomCodePrefix,
+        isActive: form.value.isActive
+      }
       if (form.value.address?.trim()) data.address = form.value.address
       if (form.value.phone?.trim()) data.phone = form.value.phone
       if (form.value.capacity != null) data.capacity = form.value.capacity
-      if (form.value.notes?.trim()) data.notes = form.value.notes
       emit('save', data)
     }}
   },
