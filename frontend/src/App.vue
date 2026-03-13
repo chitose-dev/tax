@@ -1,13 +1,20 @@
 <script setup>
-import { ref, provide } from 'vue'
+import { ref, provide, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useMasterStore } from '@/stores/master'
 import AppHeader from '@/components/common/AppHeader.vue'
 import AppSidebar from '@/components/common/AppSidebar.vue'
 
 const authStore = useAuthStore()
+const masterStore = useMasterStore()
 
 const sidebarOpen = ref(false)
 provide('sidebarOpen', sidebarOpen)
+
+// 認証済みになったらマスターデータをロード
+watch(() => authStore.isAuthenticated, (authenticated) => {
+  if (authenticated) masterStore.init()
+}, { immediate: true })
 </script>
 
 <template>
