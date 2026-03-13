@@ -241,7 +241,14 @@ const FacilityFormInline = {
       if (!form.value.facilityName?.trim()) { alert('施設名は必須です'); return }
       if (!form.value.roomCodePrefix || form.value.roomCodePrefix.length !== 1) { alert('プレフィックスは1文字で入力してください'); return }
       form.value.roomCodePrefix = form.value.roomCodePrefix.toUpperCase()
-      emit('save', { ...form.value })
+      // null/undefinedのフィールドを除去（API 422防止）
+      const data = { clientId: form.value.clientId, facilityName: form.value.facilityName, roomCodePrefix: form.value.roomCodePrefix, isActive: form.value.isActive }
+      if (form.value.facilityCode?.trim()) data.facilityCode = form.value.facilityCode
+      if (form.value.address?.trim()) data.address = form.value.address
+      if (form.value.phone?.trim()) data.phone = form.value.phone
+      if (form.value.capacity != null) data.capacity = form.value.capacity
+      if (form.value.notes?.trim()) data.notes = form.value.notes
+      emit('save', data)
     }}
   },
   template: `<form @submit.prevent="submit">
@@ -279,7 +286,12 @@ const RoomFormInline = {
         alert(`部屋コードは「${selectedPrefix.value}」で始まる必要があります`)
         return
       }
-      emit('save', { ...form.value })
+      // null/undefinedのフィールドを除去（API 422防止）
+      const data = { facilityId: form.value.facilityId, roomCode: form.value.roomCode, roomName: form.value.roomName }
+      if (form.value.capacity != null) data.capacity = form.value.capacity
+      if (form.value.notes?.trim()) data.notes = form.value.notes
+      data.isActive = form.value.isActive
+      emit('save', data)
     }}
   },
   template: `<form @submit.prevent="submit">
