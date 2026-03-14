@@ -6,22 +6,34 @@ const masterStore = useMasterStore()
 
 const showClientForm = ref(false)
 const editingClient = ref(null)
+const formError = ref('')
 
 function openClientForm(client = null) {
   editingClient.value = client
+  formError.value = ''
   showClientForm.value = true
 }
-function saveClient(data) {
-  if (editingClient.value) {
-    masterStore.updateClient(editingClient.value.id, data)
-  } else {
-    masterStore.addClient(data)
+async function saveClient(data) {
+  formError.value = ''
+  try {
+    if (editingClient.value) {
+      await masterStore.updateClient(editingClient.value.id, data)
+    } else {
+      await masterStore.addClient(data)
+    }
+    showClientForm.value = false
+    await masterStore.fetchClients(true)
+  } catch (e) {
+    formError.value = e.message || '事業者の保存に失敗しました'
   }
-  showClientForm.value = false
 }
-function deleteClient(client) {
+async function deleteClient(client) {
   if (confirm(`「${client.clientName}」を削除しますか？`)) {
-    masterStore.deleteClient(client.id)
+    try {
+      await masterStore.deleteClient(client.id)
+    } catch (e) {
+      formError.value = e.message || '事業者の削除に失敗しました'
+    }
   }
 }
 </script>
@@ -67,6 +79,7 @@ function deleteClient(client) {
     <div v-if="showClientForm" class="modal-overlay" @click.self="showClientForm = false">
       <div class="modal">
         <h3>{{ editingClient ? '事業者編集' : '新規事業者登録' }}</h3>
+        <div v-if="formError" style="color: var(--danger-color, #e74c3c); margin-bottom: 12px; font-size: 0.9em; padding: 8px 12px; background: #fef2f2; border-radius: 6px">{{ formError }}</div>
         <ClientFormInline :client="editingClient" @save="saveClient" @close="showClientForm = false" />
       </div>
     </div>

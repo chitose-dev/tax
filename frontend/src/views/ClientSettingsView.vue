@@ -44,8 +44,7 @@ async function saveSettings() {
     await masterStore.updateClient(authStore.clientId, { ...form.value })
     editing.value = false
   } catch (e) {
-    console.error('保存エラー:', e)
-    alert('保存に失敗しました: ' + (e.message || '不明なエラー'))
+    alert('保存に失敗しました: ' + (e.data?.detail || e.message || '不明なエラー'))
   } finally {
     saving.value = false
   }

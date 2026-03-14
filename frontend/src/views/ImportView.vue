@@ -108,7 +108,7 @@ function autoDetectMapping(headers) {
 }
 
 // マッピング確定 → プレビュー
-function confirmMapping() {
+async function confirmMapping() {
   error.value = ''
   // 必須チェック
   for (const f of requiredFields) {
@@ -132,14 +132,18 @@ function confirmMapping() {
 }
 
 // 確定 → インポート実行
-function executeImport() {
+async function executeImport() {
   const validRecords = previewResult.value.records.filter(r => r.isValid)
   if (validRecords.length === 0) {
     error.value = '有効なレコードがありません'
     return
   }
-  importStore.confirmImport(selectedClientId.value, validRecords)
-  router.push('/import/confirm')
+  try {
+    await importStore.confirmImport(selectedClientId.value, validRecords)
+    router.push('/import/confirm')
+  } catch (e) {
+    error.value = e.data?.detail || e.message || 'インポートに失敗しました'
+  }
 }
 
 function reset() {

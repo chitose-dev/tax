@@ -123,29 +123,41 @@ const grandTotal = computed(() => ({
   taxAmount: calculatedSummaries.value.reduce((s, c) => s + c.taxAmount, 0),
 }))
 
+const summaryError = ref('')
+
 async function saveSummary(item) {
-  await summaryStore.saveSummary({
-    clientId: selectedClientId.value,
-    facilityId: item.facilityId,
-    periodType: periodType.value,
-    periodStart: selectedYearMonth.value + '-01',
-    periodEnd: selectedYearMonth.value + '-31',
-    yearMonth: selectedYearMonth.value,
-    totalRecords: item.totalRecords,
-    totalNights: item.totalNights,
-    totalAdults: item.totalAdults,
-    totalChildren: item.totalChildren,
-    totalInfants: item.totalInfants,
-    taxablePersonNights: item.taxablePersonNights,
-    taxAmount: item.taxAmount,
-    status: 'draft',
-    createdBy: authStore.user?.uid || 'user-1'
-  })
+  summaryError.value = ''
+  try {
+    await summaryStore.saveSummary({
+      clientId: selectedClientId.value,
+      facilityId: item.facilityId,
+      periodType: periodType.value,
+      periodStart: selectedYearMonth.value + '-01',
+      periodEnd: selectedYearMonth.value + '-31',
+      yearMonth: selectedYearMonth.value,
+      totalRecords: item.totalRecords,
+      totalNights: item.totalNights,
+      totalAdults: item.totalAdults,
+      totalChildren: item.totalChildren,
+      totalInfants: item.totalInfants,
+      taxablePersonNights: item.taxablePersonNights,
+      taxAmount: item.taxAmount,
+      status: 'draft',
+      createdBy: authStore.user?.uid || 'user-1'
+    })
+  } catch (e) {
+    summaryError.value = e.data?.detail || e.message || '集計の保存に失敗しました'
+  }
 }
 
-function confirmSummary(item) {
-  if (item.summaryId) {
-    summaryStore.updateStatus(item.summaryId, 'confirmed', authStore.user?.uid)
+async function confirmSummary(item) {
+  summaryError.value = ''
+  try {
+    if (item.summaryId) {
+      await summaryStore.updateStatus(item.summaryId, 'confirmed', authStore.user?.uid)
+    }
+  } catch (e) {
+    summaryError.value = e.data?.detail || e.message || '集計の確定に失敗しました'
   }
 }
 </script>
@@ -155,6 +167,13 @@ function confirmSummary(item) {
     <div class="page-header">
       <h1>集計</h1>
       <p>月次または3か月の宿泊税を集計します</p>
+    </div>
+
+    <div v-if="summaryError" class="card mb-4" style="border-left: 4px solid var(--danger-color, #e74c3c)">
+      <div class="card-body" style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center">
+        <span>{{ summaryError }}</span>
+        <button class="btn-sm" style="border:none;background:none;cursor:pointer;font-size:1.2em" @click="summaryError = ''">×</button>
+      </div>
     </div>
 
     <!-- フィルター -->
