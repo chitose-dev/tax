@@ -83,6 +83,11 @@ export const useAuthStore = defineStore('auth', () => {
     }
     user.value = null
     userProfile.value = null
+    // ログアウト時にキャッシュクリア
+    try {
+      const { clearCache } = await import('@/lib/cache')
+      clearCache()
+    } catch { /* ignore */ }
   }
 
   async function initAuth() {

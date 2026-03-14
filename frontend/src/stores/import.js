@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { getCached, setCache } from '@/lib/cache'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 
@@ -104,10 +105,21 @@ export const useImportStore = defineStore('import', () => {
 
   async function fetchLodgingRecords(clientId) {
     if (USE_MOCK) return
+
+    // localStorageから即座に復元
+    const cacheKey = `lodging_${clientId}`
+    const cached = getCached(cacheKey)
+    if (cached?.data?.length && !lodgingRecords.value.length) {
+      lodgingRecords.value = cached.data
+    }
+
+    // APIから最新を取得（バックグラウンド更新）
     isLoading.value = true
     try {
       const { api } = await import('@/lib/api')
-      lodgingRecords.value = await api.get('/lodging-records', { clientId })
+      const data = await api.get('/lodging-records', { clientId })
+      lodgingRecords.value = data
+      setCache(cacheKey, data)
     } finally { isLoading.value = false }
   }
 

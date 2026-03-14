@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { getCached, setCache, clearCache } from '@/lib/cache'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
-const CACHE_TTL = 5 * 60 * 1000 // 5分キャッシュ
+const CACHE_TTL = 5 * 60 * 1000 // 5分（APIリフェッチ間隔）
 
 export const useMasterStore = defineStore('master', () => {
   const clients = ref([])
@@ -10,11 +11,37 @@ export const useMasterStore = defineStore('master', () => {
   const rooms = ref([])
   const isLoading = ref(false)
 
-  // キャッシュタイムスタンプ
   const _cacheTime = { clients: 0, facilities: 0, rooms: 0 }
 
   function _isCacheValid(key) {
     return Date.now() - _cacheTime[key] < CACHE_TTL
+  }
+
+  // localStorageから即座に復元
+  function _restoreFromCache() {
+    const cached = {
+      clients: getCached('clients'),
+      facilities: getCached('facilities'),
+      rooms: getCached('rooms')
+    }
+    if (cached.clients?.data?.length) {
+      clients.value = cached.clients.data
+      _cacheTime.clients = cached.clients.timestamp
+    }
+    if (cached.facilities?.data?.length) {
+      facilities.value = cached.facilities.data
+      _cacheTime.facilities = cached.facilities.timestamp
+    }
+    if (cached.rooms?.data?.length) {
+      rooms.value = cached.rooms.data
+      _cacheTime.rooms = cached.rooms.timestamp
+    }
+  }
+
+  // localStorageに保存
+  function _persistCache(key, data) {
+    setCache(key, data)
+    _cacheTime[key] = Date.now()
   }
 
   async function init() {
@@ -23,9 +50,35 @@ export const useMasterStore = defineStore('master', () => {
       clients.value = [...mockClients]
       facilities.value = [...mockFacilities]
       rooms.value = [...mockRooms]
-    } else {
-      // 並列フェッチで初期ロード高速化
-      await Promise.all([fetchClients(), fetchFacilities(), fetchRooms()])
+      return
+    }
+
+    // Step 1: localStorageから即座に復元（UIがすぐ表示される）
+    _restoreFromCache()
+
+    // Step 2: バックグラウンドでAPIから最新データを取得
+    _refreshInBackground()
+  }
+
+  // バックグラウンドリフレッシュ（awaitしない）
+  function _refreshInBackground() {
+    Promise.all([
+      _fetchAndCache('clients', '/clients'),
+      _fetchAndCache('facilities', '/facilities'),
+      _fetchAndCache('rooms', '/rooms'),
+    ]).catch(e => console.error('Background refresh failed:', e))
+  }
+
+  async function _fetchAndCache(key, endpoint) {
+    try {
+      const { api } = await import('@/lib/api')
+      const data = await api.get(endpoint)
+      if (key === 'clients') clients.value = data
+      else if (key === 'facilities') facilities.value = data
+      else if (key === 'rooms') rooms.value = data
+      _persistCache(key, data)
+    } catch (e) {
+      console.error(`Failed to fetch ${key}:`, e)
     }
   }
 
@@ -41,7 +94,7 @@ export const useMasterStore = defineStore('master', () => {
     try {
       const { api } = await import('@/lib/api')
       clients.value = await api.get('/clients')
-      _cacheTime.clients = Date.now()
+      _persistCache('clients', clients.value)
     } finally { isLoading.value = false }
   }
 
@@ -56,7 +109,7 @@ export const useMasterStore = defineStore('master', () => {
       const { api } = await import('@/lib/api')
       const newClient = await api.post('/clients', data)
       clients.value.push(newClient)
-      _cacheTime.clients = 0 // キャッシュ無効化
+      _persistCache('clients', clients.value)
       return newClient
     } finally { isLoading.value = false }
   }
@@ -73,7 +126,7 @@ export const useMasterStore = defineStore('master', () => {
       const updated = await api.put(`/clients/${id}`, data)
       const idx = clients.value.findIndex(c => c.id === id)
       if (idx !== -1) clients.value[idx] = updated
-      _cacheTime.clients = 0
+      _persistCache('clients', clients.value)
     } finally { isLoading.value = false }
   }
 
@@ -87,7 +140,7 @@ export const useMasterStore = defineStore('master', () => {
       const { api } = await import('@/lib/api')
       await api.delete(`/clients/${id}`)
       clients.value = clients.value.filter(c => c.id !== id)
-      _cacheTime.clients = 0
+      _persistCache('clients', clients.value)
     } finally { isLoading.value = false }
   }
 
@@ -108,8 +161,8 @@ export const useMasterStore = defineStore('master', () => {
         facilities.value = facilities.value.filter(f => f.clientId !== clientId).concat(data)
       } else {
         facilities.value = data
-        _cacheTime.facilities = Date.now()
       }
+      _persistCache('facilities', facilities.value)
     } finally { isLoading.value = false }
   }
 
@@ -124,7 +177,7 @@ export const useMasterStore = defineStore('master', () => {
       const { api } = await import('@/lib/api')
       const newFacility = await api.post('/facilities', data)
       facilities.value.push(newFacility)
-      _cacheTime.facilities = 0
+      _persistCache('facilities', facilities.value)
       return newFacility
     } finally { isLoading.value = false }
   }
@@ -141,7 +194,7 @@ export const useMasterStore = defineStore('master', () => {
       const updated = await api.put(`/facilities/${id}`, data)
       const idx = facilities.value.findIndex(f => f.id === id)
       if (idx !== -1) facilities.value[idx] = updated
-      _cacheTime.facilities = 0
+      _persistCache('facilities', facilities.value)
     } finally { isLoading.value = false }
   }
 
@@ -155,7 +208,7 @@ export const useMasterStore = defineStore('master', () => {
       const { api } = await import('@/lib/api')
       await api.delete(`/facilities/${id}`)
       facilities.value = facilities.value.filter(f => f.id !== id)
-      _cacheTime.facilities = 0
+      _persistCache('facilities', facilities.value)
     } finally { isLoading.value = false }
   }
 
@@ -176,8 +229,8 @@ export const useMasterStore = defineStore('master', () => {
         rooms.value = rooms.value.filter(r => r.facilityId !== facilityId).concat(data)
       } else {
         rooms.value = data
-        _cacheTime.rooms = Date.now()
       }
+      _persistCache('rooms', rooms.value)
     } finally { isLoading.value = false }
   }
 
@@ -192,7 +245,7 @@ export const useMasterStore = defineStore('master', () => {
       const { api } = await import('@/lib/api')
       const newRoom = await api.post('/rooms', data)
       rooms.value.push(newRoom)
-      _cacheTime.rooms = 0
+      _persistCache('rooms', rooms.value)
       return newRoom
     } finally { isLoading.value = false }
   }
@@ -209,7 +262,7 @@ export const useMasterStore = defineStore('master', () => {
       const updated = await api.put(`/rooms/${id}`, data)
       const idx = rooms.value.findIndex(r => r.id === id)
       if (idx !== -1) rooms.value[idx] = updated
-      _cacheTime.rooms = 0
+      _persistCache('rooms', rooms.value)
     } finally { isLoading.value = false }
   }
 
@@ -223,7 +276,7 @@ export const useMasterStore = defineStore('master', () => {
       const { api } = await import('@/lib/api')
       await api.delete(`/rooms/${id}`)
       rooms.value = rooms.value.filter(r => r.id !== id)
-      _cacheTime.rooms = 0
+      _persistCache('rooms', rooms.value)
     } finally { isLoading.value = false }
   }
 
@@ -234,6 +287,7 @@ export const useMasterStore = defineStore('master', () => {
     clients, facilities, rooms, isLoading,
     getClientById, addClient, updateClient, deleteClient, fetchClients,
     getFacilitiesByClient, addFacility, updateFacility, deleteFacility, fetchFacilities,
-    getRoomsByFacility, addRoom, updateRoom, deleteRoom, fetchRooms
+    getRoomsByFacility, addRoom, updateRoom, deleteRoom, fetchRooms,
+    init
   }
 })
