@@ -194,7 +194,7 @@ function reset() {
             <p class="text-sm text-gray">またはクリックしてファイルを選択</p>
             <p class="text-sm text-gray mt-2">対応形式: .csv, .xlsx, .xls</p>
           </div>
-          <input ref="fileInput" type="file" accept=".csv,.xlsx,.xls" hidden @change="onFileInput" />
+          <input ref="fileInput" type="file" accept=".csv,.xlsx,.xls,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden @change="onFileInput" />
         </div>
       </div>
     </div>
