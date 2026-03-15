@@ -110,7 +110,8 @@ export const useImportStore = defineStore('import', () => {
 
       const result = await api.upload(`/lodging-records/import?clientId=${encodeURIComponent(clientId)}`, formData)
       clearImportState()
-      await fetchImportLogs(clientId)
+      // インポートログの更新は非致命的（失敗してもインポート自体は成功）
+      try { await fetchImportLogs(clientId) } catch (_) { /* ignore */ }
       return result.importLogId || result.id
     } finally { isLoading.value = false }
   }
