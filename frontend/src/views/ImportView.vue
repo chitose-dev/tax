@@ -43,9 +43,11 @@ const requiredFields = [
 ]
 const optionalFields = [
   { key: 'nights', label: '宿泊日数' },
-  { key: 'infants', label: '乳幼児人数' },
-  { key: 'amount', label: '宿泊料金' },
+  { key: 'infants', label: '乳幼児の人数' },
+  { key: 'amount', label: '収入' },
 ]
+
+
 
 // Step 3: プレビュー
 const previewResult = ref(null)
