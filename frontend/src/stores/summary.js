@@ -79,7 +79,10 @@ export const useSummaryStore = defineStore('summary', () => {
     isLoading.value = true
     try {
       const { api } = await import('@/lib/api')
-      const updated = await api.put(`/summaries/${summaryId}/confirm`)
+      const endpoint = newStatus === 'exported'
+        ? `/summaries/${summaryId}/export`
+        : `/summaries/${summaryId}/confirm`
+      const updated = await api.put(endpoint)
       const idx = summaries.value.findIndex(s => s.id === summaryId)
       if (idx !== -1) summaries.value[idx] = updated
     } finally { isLoading.value = false }

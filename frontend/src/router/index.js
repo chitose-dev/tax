@@ -36,11 +36,16 @@ const router = createRouter({
   routes
 })
 
+let _authReady = null
+
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
 
+  if (!_authReady) {
+    _authReady = authStore.initAuth()
+  }
   if (authStore.isLoading) {
-    await authStore.initAuth()
+    await _authReady
   }
 
   const isAuthenticated = authStore.isAuthenticated

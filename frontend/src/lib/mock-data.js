@@ -35,7 +35,7 @@ export const mockFacilities = [
     clientId: 'client-1',
     facilityCode: 'F001',
     facilityName: 'サンプルホテル本館',
-    roomCodePrefix: 'AB',
+    roomCodePrefix: 'A',
     address: '熊本県熊本市中央区1-1-1',
     phone: '096-000-0001',
     capacity: 50,
@@ -49,7 +49,7 @@ export const mockFacilities = [
     clientId: 'client-1',
     facilityCode: 'F002',
     facilityName: 'サンプルホテル別館',
-    roomCodePrefix: 'CD',
+    roomCodePrefix: 'C',
     address: '熊本県熊本市中央区1-1-2',
     phone: '096-000-0003',
     capacity: 30,
@@ -63,7 +63,7 @@ export const mockFacilities = [
     clientId: 'client-2',
     facilityCode: 'F003',
     facilityName: 'テスト旅館',
-    roomCodePrefix: 'EF',
+    roomCodePrefix: 'E',
     address: '熊本県熊本市東区2-2-2',
     phone: '096-000-0002',
     capacity: 20,
@@ -75,36 +75,36 @@ export const mockFacilities = [
 ]
 
 export const mockRooms = [
-  { id: 'room-1', facilityId: 'facility-1', roomCode: 'AB101', roomName: '101号室', capacity: 2, isActive: true },
-  { id: 'room-2', facilityId: 'facility-1', roomCode: 'AB102', roomName: '102号室', capacity: 3, isActive: true },
-  { id: 'room-3', facilityId: 'facility-1', roomCode: 'AB201', roomName: '201号室', capacity: 4, isActive: true },
-  { id: 'room-4', facilityId: 'facility-2', roomCode: 'CD101', roomName: '別館101', capacity: 2, isActive: true },
-  { id: 'room-5', facilityId: 'facility-2', roomCode: 'CD102', roomName: '別館102', capacity: 2, isActive: true },
-  { id: 'room-6', facilityId: 'facility-3', roomCode: 'EF101', roomName: '松の間', capacity: 4, isActive: true },
-  { id: 'room-7', facilityId: 'facility-3', roomCode: 'EF102', roomName: '竹の間', capacity: 3, isActive: true },
+  { id: 'room-1', facilityId: 'facility-1', roomCode: 'A101', roomName: '101号室', capacity: 2, isActive: true },
+  { id: 'room-2', facilityId: 'facility-1', roomCode: 'A102', roomName: '102号室', capacity: 3, isActive: true },
+  { id: 'room-3', facilityId: 'facility-1', roomCode: 'A201', roomName: '201号室', capacity: 4, isActive: true },
+  { id: 'room-4', facilityId: 'facility-2', roomCode: 'C101', roomName: '別館101', capacity: 2, isActive: true },
+  { id: 'room-5', facilityId: 'facility-2', roomCode: 'C102', roomName: '別館102', capacity: 2, isActive: true },
+  { id: 'room-6', facilityId: 'facility-3', roomCode: 'E101', roomName: '松の間', capacity: 4, isActive: true },
+  { id: 'room-7', facilityId: 'facility-3', roomCode: 'E102', roomName: '竹の間', capacity: 3, isActive: true },
 ]
 
 export const mockLodgingRecords = [
   {
-    id: 'rec-1', clientId: 'client-1', facilityId: 'facility-1', roomCode: 'AB101',
+    id: 'rec-1', clientId: 'client-1', facilityId: 'facility-1', roomCode: 'A101',
     checkInDate: '2026-01-10', checkOutDate: '2026-01-12', nights: 2,
     adults: 2, children: 0, infants: 0, taxablePersons: 2, taxAmount: 800,
     yearMonth: '2026-01', importLogId: 'log-1', createdAt: new Date('2026-01-15')
   },
   {
-    id: 'rec-2', clientId: 'client-1', facilityId: 'facility-1', roomCode: 'AB102',
+    id: 'rec-2', clientId: 'client-1', facilityId: 'facility-1', roomCode: 'A102',
     checkInDate: '2026-01-11', checkOutDate: '2026-01-13', nights: 2,
     adults: 2, children: 1, infants: 1, taxablePersons: 3, taxAmount: 1200,
     yearMonth: '2026-01', importLogId: 'log-1', createdAt: new Date('2026-01-15')
   },
   {
-    id: 'rec-3', clientId: 'client-1', facilityId: 'facility-2', roomCode: 'CD101',
+    id: 'rec-3', clientId: 'client-1', facilityId: 'facility-2', roomCode: 'C101',
     checkInDate: '2026-01-15', checkOutDate: '2026-01-16', nights: 1,
     adults: 1, children: 0, infants: 0, taxablePersons: 1, taxAmount: 200,
     yearMonth: '2026-01', importLogId: 'log-1', createdAt: new Date('2026-01-20')
   },
   {
-    id: 'rec-4', clientId: 'client-1', facilityId: 'facility-1', roomCode: 'AB201',
+    id: 'rec-4', clientId: 'client-1', facilityId: 'facility-1', roomCode: 'A201',
     checkInDate: '2026-02-01', checkOutDate: '2026-02-03', nights: 2,
     adults: 3, children: 1, infants: 0, taxablePersons: 4, taxAmount: 1600,
     yearMonth: '2026-02', importLogId: 'log-2', createdAt: new Date('2026-02-05')

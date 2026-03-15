@@ -12,6 +12,12 @@ const masterStore = useMasterStore()
 
 const TAX_RATE = 200
 
+function getLastDayOfMonth(yearMonth) {
+  const [y, m] = yearMonth.split('-').map(Number)
+  const lastDay = new Date(y, m, 0).getDate()
+  return `${yearMonth}-${String(lastDay).padStart(2, '0')}`
+}
+
 const selectedClientId = ref(authStore.clientId || '')
 const selectedFacilityId = ref('')
 const selectedYearMonth = ref('')
@@ -139,7 +145,7 @@ async function saveSummary(item) {
       facilityId: item.facilityId,
       periodType: periodType.value,
       periodStart: selectedYearMonth.value + '-01',
-      periodEnd: selectedYearMonth.value + '-31',
+      periodEnd: getLastDayOfMonth(selectedYearMonth.value),
       yearMonth: selectedYearMonth.value,
       totalRecords: item.totalRecords,
       totalNights: item.totalNights,

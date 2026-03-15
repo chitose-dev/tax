@@ -2,10 +2,12 @@ export function resolveFacilityByRoomCode(roomCode, facilities) {
   if (!roomCode || roomCode.length < 1) {
     return { success: false, error: `部屋コードが無効です: "${roomCode}"` }
   }
-  const prefix = roomCode.substring(0, 1).toUpperCase()
-  const matched = facilities.find(f => f.roomCodePrefix && f.roomCodePrefix.toUpperCase() === prefix)
+  const upper = roomCode.toUpperCase()
+  // 各施設のroomCodePrefixの長さに合わせて先頭を比較（長いプレフィックスを優先）
+  const sorted = [...facilities].filter(f => f.roomCodePrefix).sort((a, b) => b.roomCodePrefix.length - a.roomCodePrefix.length)
+  const matched = sorted.find(f => upper.startsWith(f.roomCodePrefix.toUpperCase()))
   if (!matched) {
-    return { success: false, error: `部屋コード「${roomCode}」に対応する施設が見つかりません（プレフィックス: ${prefix}）` }
+    return { success: false, error: `部屋コード「${roomCode}」に対応する施設が見つかりません` }
   }
   return { success: true, facility: matched }
 }

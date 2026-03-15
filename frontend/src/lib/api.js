@@ -1,5 +1,3 @@
-import { auth } from './firebase'
-
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://tax-backend-420040876380.asia-northeast1.run.app'
 
 class ApiError extends Error {
@@ -11,10 +9,15 @@ class ApiError extends Error {
 }
 
 async function getAuthHeaders() {
-  const user = auth.currentUser
-  if (!user) return {}
-  const token = await user.getIdToken()
-  return { Authorization: `Bearer ${token}` }
+  try {
+    const { auth } = await import('./firebase')
+    const user = auth.currentUser
+    if (!user) return {}
+    const token = await user.getIdToken()
+    return { Authorization: `Bearer ${token}` }
+  } catch {
+    return {}
+  }
 }
 
 async function request(method, path, { body, params, isFormData } = {}) {
@@ -40,8 +43,11 @@ async function request(method, path, { body, params, isFormData } = {}) {
   const res = await fetch(url.toString(), options)
 
   if (res.status === 401) {
-    const { signOut } = await import('firebase/auth')
-    await signOut(auth)
+    try {
+      const { signOut } = await import('firebase/auth')
+      const { auth } = await import('./firebase')
+      await signOut(auth)
+    } catch { /* ignore */ }
     throw new ApiError('認証が無効です。再ログインしてください。', 401)
   }
 
