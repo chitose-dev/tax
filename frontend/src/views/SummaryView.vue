@@ -28,18 +28,24 @@ watch(() => masterStore.clients, (clients) => {
   }
 }, { immediate: true })
 
-// clientId変更時に宿泊レコードをフェッチ
+// clientId変更時に宿泊レコード＋集計をフェッチ
 watch(selectedClientId, async (id) => {
   if (id) {
     selectedYearMonth.value = ''
-    await importStore.fetchLodgingRecords(id)
+    await Promise.all([
+      importStore.fetchLodgingRecords(id),
+      summaryStore.loadSummaries(id)
+    ])
   }
 })
 
 // ページ表示時にも必ずフェッチ（インポート後の遷移対応）
 onMounted(async () => {
   if (selectedClientId.value) {
-    await importStore.fetchLodgingRecords(selectedClientId.value)
+    await Promise.all([
+      importStore.fetchLodgingRecords(selectedClientId.value),
+      summaryStore.loadSummaries(selectedClientId.value)
+    ])
   }
 })
 

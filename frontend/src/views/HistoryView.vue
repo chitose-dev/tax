@@ -14,15 +14,15 @@ const activeTab = ref('import')
 
 const selectedClientId = ref(authStore.clientId || masterStore.clients[0]?.id || '')
 
-onMounted(() => {
+onMounted(async () => {
   if (selectedClientId.value) {
-    importStore.fetchImportLogs(selectedClientId.value)
+    try { await importStore.fetchImportLogs(selectedClientId.value) } catch { /* ignore */ }
   }
 })
 
-watch(selectedClientId, (id) => {
+watch(selectedClientId, async (id) => {
   if (id) {
-    importStore.fetchImportLogs(id)
+    try { await importStore.fetchImportLogs(id) } catch { /* ignore */ }
   }
 })
 

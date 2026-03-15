@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useSummaryStore } from '@/stores/summary'
 import { useMasterStore } from '@/stores/master'
@@ -9,6 +9,17 @@ const summaryStore = useSummaryStore()
 const masterStore = useMasterStore()
 
 const selectedClientId = ref(authStore.clientId || masterStore.clients[0]?.id || '')
+
+// 集計データをロード
+onMounted(async () => {
+  if (selectedClientId.value) {
+    await summaryStore.loadSummaries(selectedClientId.value)
+  }
+})
+
+watch(selectedClientId, async (id) => {
+  if (id) await summaryStore.loadSummaries(id)
+})
 
 const confirmedSummaries = computed(() =>
   summaryStore.summaries.filter(
@@ -28,7 +39,7 @@ function getClientCode(clientId) {
   return masterStore.clients.find(c => c.id === clientId)?.clientCode || ''
 }
 
-function downloadCSV(summary) {
+async function downloadCSV(summary) {
   // eLTAX形式のCSV生成（簡易版）
   const clientCode = getClientCode(summary.clientId)
   const facilityCode = getFacilityCode(summary.facilityId)
@@ -50,7 +61,7 @@ function downloadCSV(summary) {
 
   // ステータス更新
   if (summary.status === 'confirmed') {
-    summaryStore.updateStatus(summary.id, 'exported')
+    await summaryStore.updateStatus(summary.id, 'exported')
   }
   summaryStore.addExportLog({
     clientId: summary.clientId,

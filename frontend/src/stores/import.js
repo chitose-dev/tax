@@ -50,35 +50,21 @@ export const useImportStore = defineStore('import', () => {
       for (const rec of records) {
         if (rec.checkInDate) dates.push(rec.checkInDate)
         const taxablePersons = (rec.adults || 0) + (rec.children || 0)
-        const totalNights = rec.nights || 0
+        const nights = rec.nights || 0
+        const taxAmount = taxablePersons * nights * 200
+        // チェックアウト月に全泊を計上（バックエンドと同一ロジック）
+        const yearMonth = rec.checkOutDate ? rec.checkOutDate.substring(0, 7)
+          : (rec.checkInDate ? rec.checkInDate.substring(0, 7) : '')
 
-        // Split by month: each night belongs to the date it starts on
-        const monthlyNights = {}
-        if (rec.checkInDate && totalNights > 0) {
-          const ciDate = new Date(rec.checkInDate + 'T00:00:00')
-          for (let d = 0; d < totalNights; d++) {
-            const stayDate = new Date(ciDate)
-            stayDate.setDate(ciDate.getDate() + d)
-            const ym = stayDate.toISOString().substring(0, 7)
-            monthlyNights[ym] = (monthlyNights[ym] || 0) + 1
-          }
-        } else {
-          const ym = rec.checkInDate ? rec.checkInDate.substring(0, 7) : ''
-          monthlyNights[ym] = totalNights
-        }
-
-        for (const [yearMonth, nights] of Object.entries(monthlyNights)) {
-          const taxAmount = taxablePersons * nights * 200
-          lodgingRecords.value.push({
-            id: 'rec-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
-            clientId, facilityId: rec.facilityId || '', roomCode: rec.roomCode || '',
-            checkInDate: rec.checkInDate, checkOutDate: rec.checkOutDate,
-            nights, totalNights, adults: rec.adults || 0,
-            children: rec.children || 0, infants: rec.infants || 0,
-            taxablePersons, taxAmount, yearMonth,
-            importLogId: logId, createdAt: now
-          })
-        }
+        lodgingRecords.value.push({
+          id: 'rec-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+          clientId, facilityId: rec.facilityId || '', roomCode: rec.roomCode || '',
+          checkInDate: rec.checkInDate, checkOutDate: rec.checkOutDate,
+          nights, adults: rec.adults || 0,
+          children: rec.children || 0, infants: rec.infants || 0,
+          taxablePersons, taxAmount, yearMonth,
+          importLogId: logId, createdAt: now
+        })
       }
 
       dates.sort()
