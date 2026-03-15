@@ -98,6 +98,9 @@ export const useImportStore = defineStore('import', () => {
     }
 
     // API mode: send original CSV file
+    if (!rawFile.value) {
+      throw new Error('ファイルデータが見つかりません。ファイルを再選択してください。')
+    }
     isLoading.value = true
     try {
       const { api } = await import('@/lib/api')

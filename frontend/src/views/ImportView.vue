@@ -35,14 +35,14 @@ const mapping = ref({
 })
 
 const requiredFields = [
-  { key: 'roomCode', label: 'リスティング（部屋コード）' },
-  { key: 'checkInDate', label: 'チェックイン日' },
-  { key: 'checkOutDate', label: 'チェックアウト日' },
-  { key: 'adults', label: '大人人数' },
-  { key: 'children', label: '子供人数' },
+  { key: 'roomCode', label: 'リスティング' },
+  { key: 'checkInDate', label: '開始日' },
+  { key: 'checkOutDate', label: '終了日' },
+  { key: 'adults', label: '大人の人数' },
+  { key: 'children', label: '子どもの人数' },
 ]
 const optionalFields = [
-  { key: 'nights', label: '泊数' },
+  { key: 'nights', label: '宿泊日数' },
   { key: 'infants', label: '乳幼児人数' },
   { key: 'amount', label: '宿泊料金' },
 ]
@@ -98,13 +98,13 @@ function autoDetectMapping(headers) {
     return idx >= 0 ? idx : null
   }
   mapping.value.roomCode = find('リスティング', 'listing', '部屋', 'room')
-  mapping.value.checkInDate = find('チェックイン', 'checkin', 'check-in', 'check_in', '入日')
-  mapping.value.checkOutDate = find('チェックアウト', 'checkout', 'check-out', 'check_out', '出日')
-  mapping.value.nights = find('泊数', 'nights', '泊')
-  mapping.value.adults = find('大人', 'adults', 'adult')
-  mapping.value.children = find('子供', 'children', 'child', '小人')
-  mapping.value.infants = find('乳幼児', 'infant', '幼児')
-  mapping.value.amount = find('料金', 'amount', '金額', '売上')
+  mapping.value.checkInDate = find('開始日', 'チェックイン', 'checkin', 'check-in', 'check_in', '入日')
+  mapping.value.checkOutDate = find('終了日', 'チェックアウト', 'checkout', 'check-out', 'check_out', '出日')
+  mapping.value.nights = find('宿泊日数', '泊数', 'nights', '泊')
+  mapping.value.adults = find('大人の人数', '大人', 'adults', 'adult')
+  mapping.value.children = find('子どもの人数', '子供', 'children', 'child', '小人')
+  mapping.value.infants = find('乳幼児の人数', '乳幼児', 'infant', '幼児')
+  mapping.value.amount = find('収入', '料金', 'amount', '金額', '売上')
 }
 
 // マッピング確定 → プレビュー
