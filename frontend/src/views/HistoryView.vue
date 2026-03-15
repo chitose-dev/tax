@@ -103,7 +103,7 @@ function formatDate(d) {
                 <td class="text-sm">{{ formatDate(log.createdAt) }}</td>
                 <td>{{ log.fileName }}</td>
                 <td>{{ log.periodStart }} 〜 {{ log.periodEnd }}</td>
-                <td>&yen;{{ log.taxAmount?.toLocaleString() }}</td>
+                <td>&yen;{{ (log.taxAmount ?? log.totalTaxAmount)?.toLocaleString() }}</td>
               </tr>
             </tbody>
           </table>
