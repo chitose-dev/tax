@@ -137,10 +137,11 @@ const grandTotal = computed(() => ({
 
 const summaryError = ref('')
 
-async function saveSummary(item) {
+async function saveAndConfirm(item) {
   summaryError.value = ''
   try {
-    await summaryStore.saveSummary({
+    // 保存（generate）→ 即確定
+    const summaryId = await summaryStore.saveSummary({
       clientId: selectedClientId.value,
       facilityId: item.facilityId,
       periodType: periodType.value,
@@ -157,17 +158,12 @@ async function saveSummary(item) {
       status: 'draft',
       createdBy: authStore.user?.uid || 'user-1'
     })
-  } catch (e) {
-    summaryError.value = e.data?.detail || e.message || '集計の保存に失敗しました'
-  }
-}
-
-async function confirmSummary(item) {
-  summaryError.value = ''
-  try {
-    if (item.summaryId) {
-      await summaryStore.updateStatus(item.summaryId, 'confirmed', authStore.user?.uid)
+    // 保存成功したら即確定
+    if (summaryId) {
+      await summaryStore.updateStatus(summaryId, 'confirmed', authStore.user?.uid)
     }
+    // 最新データ再取得
+    await summaryStore.loadSummaries(selectedClientId.value)
   } catch (e) {
     summaryError.value = e.data?.detail || e.message || '集計の確定に失敗しました'
   }
@@ -254,8 +250,7 @@ async function confirmSummary(item) {
                 <span v-else class="text-sm text-gray">未保存</span>
               </td>
               <td style="text-align:right;white-space:nowrap">
-                <button v-if="!item.status" class="btn-secondary btn-sm" @click="saveSummary(item)">保存</button>
-                <button v-else-if="item.status === 'draft'" class="btn-primary btn-sm" @click="confirmSummary(item)">確定</button>
+                <button v-if="!item.status || item.status === 'draft'" class="btn-primary btn-sm" @click="saveAndConfirm(item)">確定</button>
                 <span v-else class="text-sm text-gray">確定済</span>
               </td>
             </tr>
