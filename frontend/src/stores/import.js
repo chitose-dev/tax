@@ -40,7 +40,7 @@ export const useImportStore = defineStore('import', () => {
     mappedRecords.value = records
   }
 
-  async function confirmImport(clientId, records) {
+  async function confirmImport(clientId, records, fileOverride) {
     if (USE_MOCK) {
       const { mockLodgingRecords } = await import('@/lib/mock-data')
       const logId = 'log-' + Date.now()
@@ -98,14 +98,15 @@ export const useImportStore = defineStore('import', () => {
     }
 
     // API mode: send original CSV file
-    if (!rawFile.value) {
+    const uploadFile = fileOverride || rawFile.value
+    if (!uploadFile) {
       throw new Error('ファイルデータが見つかりません。ファイルを再選択してください。')
     }
     isLoading.value = true
     try {
       const { api } = await import('@/lib/api')
       const formData = new FormData()
-      formData.append('file', rawFile.value)
+      formData.append('file', uploadFile)
 
       const result = await api.upload(`/lodging-records/import?clientId=${encodeURIComponent(clientId)}`, formData)
       clearImportState()

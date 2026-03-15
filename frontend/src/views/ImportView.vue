@@ -140,12 +140,13 @@ async function executeImport() {
     error.value = '有効なレコードがありません'
     return
   }
-  // rawFileがstoreから消えてる場合、ローカルのselectedFileを使う
-  if (!importStore.rawFile && selectedFile.value) {
-    importStore.setParsedData(parsedHeaders.value, parsedRows.value, selectedFile.value.name, selectedFile.value)
+  const file = importStore.rawFile || selectedFile.value
+  if (!file) {
+    error.value = 'ファイルデータが見つかりません。ファイルを再選択してください。'
+    return
   }
   try {
-    await importStore.confirmImport(selectedClientId.value, validRecords)
+    await importStore.confirmImport(selectedClientId.value, validRecords, file)
     router.push('/import/confirm')
   } catch (e) {
     error.value = e.data?.detail || e.message || 'インポートに失敗しました'
