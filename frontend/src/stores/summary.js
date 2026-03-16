@@ -5,7 +5,7 @@ const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 
 export const useSummaryStore = defineStore('summary', () => {
   const summaries = ref([])
-  const exportLogs = ref([])
+  const exportLogs = ref(JSON.parse(localStorage.getItem('exportLogs') || '[]'))
   const isLoading = ref(false)
   const error = ref(null)
 
@@ -117,9 +117,14 @@ export const useSummaryStore = defineStore('summary', () => {
     await api.download('/summaries/export', { clientId, yearMonth, format }, filename)
   }
 
+  function saveExportLogs() {
+    try { localStorage.setItem('exportLogs', JSON.stringify(exportLogs.value.slice(0, 100))) } catch {}
+  }
+
   function addExportLog(data) {
     const log = { id: 'exp-' + Date.now(), ...data, createdAt: new Date(), downloadCount: 1 }
     exportLogs.value.unshift(log)
+    saveExportLogs()
     return log
   }
 
