@@ -59,10 +59,10 @@ async function downloadCSV(summary) {
   a.click()
   URL.revokeObjectURL(url)
 
-  // ステータス更新
-  if (summary.status === 'confirmed') {
-    await summaryStore.updateStatus(summary.id, 'exported')
-  }
+  // ローカルでステータス更新（バックエンドに/exportエンドポイントのPUTがないため）
+  const idx = summaryStore.summaries.findIndex(s => s.id === summary.id)
+  if (idx !== -1) summaryStore.summaries[idx].status = 'exported'
+
   summaryStore.addExportLog({
     clientId: summary.clientId,
     facilityId: summary.facilityId,
