@@ -1,0 +1,4 @@
+facilityId,roomCode,checkInDate,checkOutDate,adults,children,infants,nights
+,H-001,INVALID,INVALID,1,0,0,1
+,H-001,BAD-DATE,BAD-DATE,2,0,0,1
+,H-001,NOT-DATE,NOT-DATE,1,1,0,1

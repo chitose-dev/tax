@@ -60,6 +60,11 @@ export const useSummaryStore = defineStore('summary', () => {
       const result = await api.post('/summaries/generate', data)
       // Refresh summaries list
       if (data.clientId) await loadSummaries(data.clientId)
+      // generate returns array of summaries — find the one matching our facilityId
+      if (Array.isArray(result)) {
+        const match = result.find(s => s.facilityId === data.facilityId)
+        return match?.id || (result[0]?.id)
+      }
       return result.id
     } finally { isLoading.value = false }
   }
