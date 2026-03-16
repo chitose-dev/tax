@@ -10,6 +10,18 @@ const masterStore = useMasterStore()
 
 const selectedClientId = ref(authStore.clientId || masterStore.clients[0]?.id || '')
 
+function getPeriodStart(s) {
+  if (s.periodStart) return s.periodStart
+  return s.yearMonth ? s.yearMonth + '-01' : ''
+}
+function getPeriodEnd(s) {
+  if (s.periodEnd) return s.periodEnd
+  if (!s.yearMonth) return ''
+  const [y, m] = s.yearMonth.split('-').map(Number)
+  const lastDay = new Date(y, m, 0).getDate()
+  return `${s.yearMonth}-${String(lastDay).padStart(2, '0')}`
+}
+
 // 集計データをロード
 onMounted(async () => {
   if (selectedClientId.value) {
@@ -47,7 +59,7 @@ async function downloadCSV(summary) {
 
   const rows = [
     ['特別徴収義務者番号', '宿泊施設番号', '宿泊施設名称', '課税期間開始', '課税期間終了', '課税人泊数', '税率', '税額'],
-    [clientCode, facilityCode, facilityName, summary.periodStart, summary.periodEnd, summary.taxablePersonNights ?? summary.totalTaxablePersons, 200, summary.taxAmount ?? summary.totalTaxAmount]
+    [clientCode, facilityCode, facilityName, getPeriodStart(summary), getPeriodEnd(summary), summary.taxablePersonNights ?? summary.totalTaxablePersons, 200, summary.taxAmount ?? summary.totalTaxAmount]
   ]
   const csv = rows.map(r => r.join(',')).join('\n')
   const bom = '\uFEFF'
@@ -68,8 +80,8 @@ async function downloadCSV(summary) {
     facilityId: summary.facilityId,
     summaryId: summary.id,
     periodType: summary.periodType,
-    periodStart: summary.periodStart,
-    periodEnd: summary.periodEnd,
+    periodStart: getPeriodStart(summary),
+    periodEnd: getPeriodEnd(summary),
     fileName: a.download,
     taxAmount: summary.taxAmount ?? summary.totalTaxAmount,
     createdBy: authStore.user?.uid || 'user-1'
