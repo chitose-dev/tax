@@ -46,7 +46,7 @@ async function handleLogin() {
 </script>
 
 <template>
-  <div v-if="!authStore.isAuthenticated" class="login-container">
+  <div class="login-container">
     <div class="login-card">
       <h1 class="login-title">宿泊税計算システム</h1>
       <div v-if="useMock" class="alert alert-info" style="margin-top:12px;font-size:12px">
