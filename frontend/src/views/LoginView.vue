@@ -36,7 +36,9 @@ async function handleLogin() {
     const redirect = route.query.redirect || '/'
     await router.replace(redirect)
   } catch (e) {
-    loginError.value = authStore.error || 'ログインに失敗しました'
+    console.error('Login error:', e)
+    loginError.value = authStore.error || e.message || 'ログインに失敗しました'
+    await nextTick()
   } finally {
     isLoading.value = false
   }
