@@ -42,6 +42,15 @@ function formatDate(d) {
   if (!d) return '-'
   return new Date(d).toLocaleString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
+
+async function rollbackImport(log) {
+  if (!confirm(`「${log.fileName}」のインポートを削除しますか？関連する宿泊レコードも削除されます。`)) return
+  try {
+    await importStore.rollbackImport(log.id)
+  } catch (e) {
+    alert(e.message || 'インポートの削除に失敗しました')
+  }
+}
 </script>
 
 <template>
@@ -73,7 +82,7 @@ function formatDate(d) {
         <div class="table-wrapper">
           <table v-if="importHistory.length > 0">
             <thead>
-              <tr><th>日時</th><th>ファイル名</th><th>施設</th><th>成功/全体</th><th>状態</th></tr>
+              <tr><th>日時</th><th>ファイル名</th><th>施設</th><th>成功/全体</th><th>状態</th><th v-if="authStore.isAdmin"></th></tr>
             </thead>
             <tbody>
               <tr v-for="log in importHistory" :key="log.id">
@@ -82,6 +91,9 @@ function formatDate(d) {
                 <td class="text-sm">{{ getFacilityNames(log.facilityIds || []) }}</td>
                 <td>{{ log.successRows }} / {{ log.totalRows }}</td>
                 <td><span :class="['badge', 'badge-' + log.status]">{{ log.status }}</span></td>
+                <td v-if="authStore.isAdmin" style="text-align:right;white-space:nowrap">
+                  <button class="btn-danger btn-sm" @click="rollbackImport(log)">削除</button>
+                </td>
               </tr>
             </tbody>
           </table>

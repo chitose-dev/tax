@@ -28,6 +28,13 @@ const filteredRooms = computed(() => {
   return masterStore.rooms.filter(r => facilityIds.includes(r.facilityId))
 })
 
+// ROOM-01: 部屋タブの施設絞り込み
+const roomFilterFacilityId = ref('')
+const displayedRooms = computed(() => {
+  if (!roomFilterFacilityId.value) return filteredRooms.value
+  return filteredRooms.value.filter(r => r.facilityId === roomFilterFacilityId.value)
+})
+
 // --- Facility ---
 const showFacilityForm = ref(false)
 const editingFacility = ref(null)
@@ -131,15 +138,15 @@ function getFacilityName(facilityId) {
     <div v-if="activeTab === 'facilities'" class="card">
       <div class="card-header">
         <h2>施設一覧</h2>
-        <button v-if="authStore.isAdmin" class="btn-primary btn-sm" @click="openFacilityForm()">+ 新規登録</button>
+        <button v-if="authStore.isAdmin || authStore.clientId" class="btn-primary btn-sm" @click="openFacilityForm()">+ 新規登録</button>
       </div>
       <div class="card-body" style="padding:0">
         <div class="table-wrapper">
           <table>
-            <thead><tr><th>事業者</th><th>コード</th><th>施設名</th><th>プレフィックス</th><th>状態</th><th v-if="authStore.isAdmin"></th></tr></thead>
+            <thead><tr><th>事業者</th><th>コード</th><th>施設名</th><th>プレフィックス</th><th>状態</th><th v-if="authStore.isAdmin || authStore.clientId"></th></tr></thead>
             <tbody>
               <tr v-if="filteredFacilities.length === 0">
-                <td :colspan="authStore.isAdmin ? 6 : 5" class="empty-state">施設が登録されていません</td>
+                <td :colspan="(authStore.isAdmin || authStore.clientId) ? 6 : 5" class="empty-state">施設が登録されていません</td>
               </tr>
               <tr v-for="f in filteredFacilities" :key="f.id">
                 <td class="text-sm">{{ getClientName(f.clientId) }}</td>
@@ -147,9 +154,9 @@ function getFacilityName(facilityId) {
                 <td>{{ f.facilityName }}</td>
                 <td><code style="background:var(--color-gray-100);padding:2px 6px;border-radius:4px">{{ f.roomCodePrefix }}</code></td>
                 <td><span :class="['badge', f.isActive ? 'badge-success' : 'badge-error']">{{ f.isActive ? '有効' : '無効' }}</span></td>
-                <td v-if="authStore.isAdmin" style="text-align:right;white-space:nowrap">
-                  <button class="btn-secondary btn-sm" @click="openFacilityForm(f)" style="margin-right:4px">編集</button>
-                  <button class="btn-danger btn-sm" @click="deleteFacility(f)">削除</button>
+                <td v-if="authStore.isAdmin || authStore.clientId" style="text-align:right;white-space:nowrap">
+                  <button v-if="authStore.isAdmin || f.clientId === authStore.clientId" class="btn-secondary btn-sm" @click="openFacilityForm(f)" style="margin-right:4px">編集</button>
+                  <button v-if="authStore.isAdmin" class="btn-danger btn-sm" @click="deleteFacility(f)">削除</button>
                 </td>
               </tr>
             </tbody>
@@ -162,25 +169,32 @@ function getFacilityName(facilityId) {
     <div v-if="activeTab === 'rooms'" class="card">
       <div class="card-header">
         <h2>部屋一覧</h2>
-        <button v-if="authStore.isAdmin" class="btn-primary btn-sm" @click="openRoomForm()">+ 新規登録</button>
+        <button v-if="authStore.isAdmin || authStore.clientId" class="btn-primary btn-sm" @click="openRoomForm()">+ 新規登録</button>
       </div>
-      <div class="card-body" style="padding:0">
+      <div class="card-body">
+        <div class="form-group" style="max-width:300px;margin-bottom:16px">
+          <label>施設で絞り込み</label>
+          <select v-model="roomFilterFacilityId">
+            <option value="">すべての施設</option>
+            <option v-for="f in filteredFacilities" :key="f.id" :value="f.id">{{ f.facilityName }}</option>
+          </select>
+        </div>
         <div class="table-wrapper">
           <table>
-            <thead><tr><th>施設</th><th>部屋コード</th><th>部屋名</th><th>定員</th><th>状態</th><th v-if="authStore.isAdmin"></th></tr></thead>
+            <thead><tr><th>施設</th><th>部屋コード</th><th>部屋名</th><th>定員</th><th>状態</th><th v-if="authStore.isAdmin || authStore.clientId"></th></tr></thead>
             <tbody>
-              <tr v-if="filteredRooms.length === 0">
-                <td :colspan="authStore.isAdmin ? 6 : 5" class="empty-state">部屋が登録されていません</td>
+              <tr v-if="displayedRooms.length === 0">
+                <td :colspan="(authStore.isAdmin || authStore.clientId) ? 6 : 5" class="empty-state">部屋が登録されていません</td>
               </tr>
-              <tr v-for="r in filteredRooms" :key="r.id">
+              <tr v-for="r in displayedRooms" :key="r.id">
                 <td class="text-sm">{{ getFacilityName(r.facilityId) }}</td>
                 <td><code style="background:var(--color-gray-100);padding:2px 6px;border-radius:4px">{{ r.roomCode }}</code></td>
                 <td>{{ r.roomName }}</td>
                 <td>{{ r.capacity || '-' }}</td>
                 <td><span :class="['badge', r.isActive ? 'badge-success' : 'badge-error']">{{ r.isActive ? '有効' : '無効' }}</span></td>
-                <td v-if="authStore.isAdmin" style="text-align:right;white-space:nowrap">
+                <td v-if="authStore.isAdmin || authStore.clientId" style="text-align:right;white-space:nowrap">
                   <button class="btn-secondary btn-sm" @click="openRoomForm(r)" style="margin-right:4px">編集</button>
-                  <button class="btn-danger btn-sm" @click="deleteRoom(r)">削除</button>
+                  <button v-if="authStore.isAdmin" class="btn-danger btn-sm" @click="deleteRoom(r)">削除</button>
                 </td>
               </tr>
             </tbody>
@@ -262,7 +276,7 @@ const FacilityFormInline = {
     <div class="form-group"><label>プレフィックス <span class="required">*</span><span class="hint">（1文字固定）</span></label><input v-model="form.roomCodePrefix" required maxlength="1" minlength="1" class="input-small" @input="form.roomCodePrefix = form.roomCodePrefix.toUpperCase()" /><p class="form-hint">CSVの部屋コード先頭1桁と照合して施設を自動識別します（例: A→施設A, K→施設K）</p></div>
     <div class="form-group"><label>所在地</label><input v-model="form.address" maxlength="200" /></div>
     <div class="form-group"><label>電話</label><input v-model="form.phone" type="tel" maxlength="15" /></div>
-    <div class="form-group"><label>収容人数</label><input v-model.number="form.capacity" type="number" min="1" class="input-small" /></div>
+    <div class="form-group"><label>収容人数</label><input v-model.number="form.capacity" type="number" min="0" class="input-small" /></div>
     <div class="form-group"><label>備考</label><textarea v-model="form.notes" rows="2" maxlength="500"></textarea></div>
     <div class="form-group"><label class="checkbox"><input type="checkbox" v-model="form.isActive" />有効</label></div>
     <div class="modal-actions"><button type="button" class="btn-secondary" @click="$emit('close')">キャンセル</button><button type="submit" class="btn-primary">保存</button></div>
@@ -302,7 +316,7 @@ const RoomFormInline = {
     <div class="form-group"><label>施設 <span class="required">*</span></label><select v-model="form.facilityId" required :disabled="!!room"><option value="">選択</option><option v-for="f in facilities" :key="f.id" :value="f.id">{{f.facilityName}}（{{f.roomCodePrefix}}）</option></select></div>
     <div class="form-group"><label>部屋コード <span class="required">*</span><span class="hint" v-if="selectedPrefix">（{{selectedPrefix}}で始めてください）</span></label><input v-model="form.roomCode" required maxlength="10" @input="form.roomCode = form.roomCode.toUpperCase()" /></div>
     <div class="form-group"><label>部屋名 <span class="required">*</span></label><input v-model="form.roomName" required maxlength="50" /></div>
-    <div class="form-group"><label>定員</label><input v-model.number="form.capacity" type="number" min="1" class="input-small" /></div>
+    <div class="form-group"><label>定員</label><input v-model.number="form.capacity" type="number" min="0" class="input-small" /></div>
     <div class="form-group"><label>備考</label><textarea v-model="form.notes" rows="2" maxlength="500"></textarea></div>
     <div class="form-group"><label class="checkbox"><input type="checkbox" v-model="form.isActive" />有効</label></div>
     <div class="modal-actions"><button type="button" class="btn-secondary" @click="$emit('close')">キャンセル</button><button type="submit" class="btn-primary">保存</button></div>

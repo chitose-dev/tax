@@ -50,15 +50,15 @@ async function handleLogin() {
       <div v-if="useMock" class="alert alert-info" style="margin-top:12px;font-size:12px">
         モック: admin@example.com で管理者、それ以外で一般ユーザーとしてログイン（パスワードは何でもOK）
       </div>
-      <form @submit.prevent="handleLogin" class="login-form">
+      <form @submit.prevent="handleLogin" class="login-form" novalidate>
         <div class="form-group">
           <label for="email">メールアドレス</label>
-          <input id="email" v-model="email" type="email" placeholder="example@example.com" required autocomplete="email" />
+          <input id="email" v-model="email" type="email" placeholder="example@example.com" autocomplete="email" />
           <span v-if="errors.email" class="error-message">{{ errors.email }}</span>
         </div>
         <div class="form-group">
           <label for="password">パスワード</label>
-          <input id="password" v-model="password" type="password" placeholder="パスワード" required autocomplete="current-password" />
+          <input id="password" v-model="password" type="password" placeholder="パスワード" autocomplete="current-password" />
           <span v-if="errors.password" class="error-message">{{ errors.password }}</span>
         </div>
         <div v-if="loginError" class="alert alert-error">{{ loginError }}</div>

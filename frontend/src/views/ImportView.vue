@@ -68,10 +68,25 @@ async function handleFile(file) {
     error.value = 'CSV または Excelファイルを選択してください'
     return
   }
+  // CSV-14: ファイルサイズ上限チェック (10MB)
+  if (file.size > 10 * 1024 * 1024) {
+    error.value = 'ファイルサイズが10MBを超えています。ファイルを分割してください。'
+    return
+  }
   selectedFile.value = file
   isLoading.value = true
   try {
     const result = await parseFile(file)
+    // CSV-15: 行数上限チェック
+    if (result.rows.length > 10000) {
+      error.value = `データ行数が${result.rows.length}行あります。10,000行以内にしてください。`
+      return
+    }
+    // CSV-16: データ行が0件チェック
+    if (result.rows.length === 0) {
+      error.value = 'データ行がありません'
+      return
+    }
     parsedHeaders.value = result.headers
     parsedRows.value = result.rows
     importStore.setParsedData(result.headers, result.rows, file.name, file)

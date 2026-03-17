@@ -19,16 +19,56 @@ export function previewFacilityResolution(records, facilities) {
 
   for (let i = 0; i < records.length; i++) {
     const record = records[i]
+    const rowNum = record.rowNumber || (i + 2)
+    const rowErrors = []
+
+    // CSV-17: 日付バリデーション
+    if (record.checkInDate) {
+      const ci = new Date(record.checkInDate)
+      if (isNaN(ci.getTime())) {
+        rowErrors.push({ row: rowNum, column: 'checkInDate', message: `開始日が不正です: "${record.checkInDate}"`, value: record.checkInDate, severity: 'error' })
+      }
+    }
+    if (record.checkOutDate) {
+      const co = new Date(record.checkOutDate)
+      if (isNaN(co.getTime())) {
+        rowErrors.push({ row: rowNum, column: 'checkOutDate', message: `終了日が不正です: "${record.checkOutDate}"`, value: record.checkOutDate, severity: 'error' })
+      }
+    }
+
+    // EDGE-08/CSV-19: 日付逆転チェック (CO <= CI)
+    if (record.checkInDate && record.checkOutDate) {
+      const ci = new Date(record.checkInDate)
+      const co = new Date(record.checkOutDate)
+      if (!isNaN(ci.getTime()) && !isNaN(co.getTime()) && co <= ci) {
+        rowErrors.push({ row: rowNum, column: 'checkOutDate', message: `終了日が開始日以前です: ${record.checkInDate} 〜 ${record.checkOutDate}`, value: record.checkOutDate, severity: 'error' })
+      }
+    }
+
+    // CSV-18: nights不正チェック
+    if (record.nights !== undefined && record.nights !== null && record.nights < 0) {
+      rowErrors.push({ row: rowNum, column: 'nights', message: `宿泊日数が不正です: ${record.nights}`, value: String(record.nights), severity: 'error' })
+    }
+
+    // EDGE-11: 小数nightsエラー (csv-parserから伝搬)
+    if (record._nightsError) {
+      rowErrors.push({ row: rowNum, column: 'nights', message: record._nightsError, value: String(record.nights), severity: 'error' })
+    }
+
     const result = resolveFacilityByRoomCode(record.roomCode, facilities)
-    if (result.success) {
-      processedRecords.push({ ...record, rowNumber: i + 2, facilityId: result.facility.id, facilityName: result.facility.facilityName, isValid: true })
+    if (result.success && rowErrors.length === 0) {
+      processedRecords.push({ ...record, rowNumber: rowNum, facilityId: result.facility.id, facilityName: result.facility.facilityName, isValid: true })
       if (!facilityBreakdown[result.facility.id]) {
         facilityBreakdown[result.facility.id] = { facilityId: result.facility.id, facilityName: result.facility.facilityName, count: 0 }
       }
       facilityBreakdown[result.facility.id].count++
     } else {
-      processedRecords.push({ ...record, rowNumber: i + 2, facilityId: null, facilityName: null, isValid: false, error: result.error })
-      errors.push({ row: i + 2, column: 'roomCode', message: result.error, value: record.roomCode, severity: 'error' })
+      const allErrors = [...rowErrors]
+      if (!result.success) {
+        allErrors.push({ row: rowNum, column: 'roomCode', message: result.error, value: record.roomCode, severity: 'error' })
+      }
+      processedRecords.push({ ...record, rowNumber: rowNum, facilityId: result.success ? result.facility.id : null, facilityName: result.success ? result.facility.facilityName : null, isValid: false, error: allErrors.map(e => e.message).join('; ') })
+      errors.push(...allErrors)
     }
   }
   return { records: processedRecords, facilityBreakdown: Object.values(facilityBreakdown), errors }

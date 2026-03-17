@@ -71,9 +71,21 @@ async function downloadCSV(summary) {
   a.click()
   URL.revokeObjectURL(url)
 
-  // ローカルでステータス更新（バックエンドに/exportエンドポイントのPUTがないため）
-  const idx = summaryStore.summaries.findIndex(s => s.id === summary.id)
-  if (idx !== -1) summaryStore.summaries[idx].status = 'exported'
+  // バックエンドAPIでexportedステータスをDB保存
+  try {
+    const { api } = await import('@/lib/api')
+    await api.get('/summaries/export', {
+      clientId: summary.clientId,
+      yearMonth: summary.yearMonth,
+      format: 'csv'
+    })
+    // APIからステータス更新を反映
+    await summaryStore.loadSummaries(selectedClientId.value)
+  } catch (e) {
+    // API失敗時はローカルでフォールバック更新
+    const idx = summaryStore.summaries.findIndex(s => s.id === summary.id)
+    if (idx !== -1) summaryStore.summaries[idx].status = 'exported'
+  }
 
   summaryStore.addExportLog({
     clientId: summary.clientId,

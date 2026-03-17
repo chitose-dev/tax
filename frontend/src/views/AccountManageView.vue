@@ -189,7 +189,7 @@ onMounted(fetchUsers)
                 </td>
                 <td style="text-align:right;white-space:nowrap">
                   <button v-if="authStore.isAdmin" class="btn-secondary btn-sm" @click="openEditForm(u)" style="margin-right:4px">編集</button>
-                  <button v-if="authStore.isAdmin" class="btn-danger btn-sm" @click="deleteUser(u)" :disabled="u.id === authStore.user?.uid">削除</button>
+                  <button v-if="authStore.isAdmin" class="btn-danger btn-sm" @click="deleteUser(u)" :disabled="u.id === authStore.user?.uid" :title="u.id === authStore.user?.uid ? '自分自身は削除できません' : ''">削除</button>
                 </td>
               </tr>
               <tr v-if="users.length === 0">

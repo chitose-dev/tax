@@ -69,7 +69,16 @@ export function applyColumnMapping(rows, mapping) {
     const record = { rowNumber: index + 2 }
     if (mapping.checkInDate != null) record.checkInDate = row[mapping.checkInDate] || ''
     if (mapping.checkOutDate != null) record.checkOutDate = row[mapping.checkOutDate] || ''
-    if (mapping.nights != null) record.nights = parseInt(row[mapping.nights], 10) || 0
+    if (mapping.nights != null) {
+      const rawNights = row[mapping.nights]
+      const parsed = parseFloat(rawNights)
+      if (rawNights !== '' && rawNights != null && !isNaN(parsed) && !Number.isInteger(parsed)) {
+        record.nights = 0
+        record._nightsError = `宿泊日数が小数です: "${rawNights}"`
+      } else {
+        record.nights = parseInt(rawNights, 10) || 0
+      }
+    }
     if (mapping.adults != null) record.adults = parseInt(row[mapping.adults], 10) || 0
     if (mapping.children != null) record.children = parseInt(row[mapping.children], 10) || 0
     if (mapping.infants != null) record.infants = parseInt(row[mapping.infants], 10) || 0

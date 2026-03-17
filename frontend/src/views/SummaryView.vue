@@ -98,7 +98,7 @@ const calculatedSummaries = computed(() => {
       if (r.nights) return r.nights
       if (r.checkInDate && r.checkOutDate) {
         const diff = new Date(r.checkOutDate) - new Date(r.checkInDate)
-        return Math.max(1, Math.round(diff / 86400000))
+        return Math.max(0, Math.round(diff / 86400000))
       }
       return 1
     }
@@ -136,6 +136,19 @@ const grandTotal = computed(() => ({
 }))
 
 const summaryError = ref('')
+
+async function deleteSummary(item) {
+  if (!item.summaryId) return
+  const label = item.facilityName + ' ' + selectedYearMonth.value
+  if (!confirm(`「${label}」の集計を削除しますか？`)) return
+  summaryError.value = ''
+  try {
+    await summaryStore.deleteSummary(item.summaryId)
+    await summaryStore.loadSummaries(selectedClientId.value)
+  } catch (e) {
+    summaryError.value = e.data?.detail || e.message || '集計の削除に失敗しました'
+  }
+}
 
 async function saveAndConfirm(item) {
   summaryError.value = ''
@@ -252,6 +265,12 @@ async function saveAndConfirm(item) {
               <td style="text-align:right;white-space:nowrap">
                 <button v-if="!item.status || item.status === 'draft'" class="btn-primary btn-sm" @click="saveAndConfirm(item)">確定</button>
                 <span v-else class="text-sm text-gray">確定済</span>
+                <button
+                  v-if="item.summaryId && (authStore.isAdmin || item.status === 'draft')"
+                  class="btn-danger btn-sm"
+                  style="margin-left:4px"
+                  @click="deleteSummary(item)"
+                >削除</button>
               </td>
             </tr>
             <tr style="font-weight:700;background:var(--color-gray-50)">
