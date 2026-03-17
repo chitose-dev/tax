@@ -27,6 +27,19 @@ const clientFacilities = computed(() =>
   masterStore.facilities.filter(f => f.clientId === selectedClientId.value && f.isActive)
 )
 
+// EDGE-10: 削除済み施設を含む全施設（宿泊レコードのfacilityIdから復元）
+const allFacilitiesForSummary = computed(() => {
+  const knownIds = new Set(clientFacilities.value.map(f => f.id))
+  const orphanIds = new Set()
+  importStore.lodgingRecords
+    .filter(r => r.clientId === selectedClientId.value)
+    .forEach(r => { if (r.facilityId && !knownIds.has(r.facilityId)) orphanIds.add(r.facilityId) })
+  const orphanFacilities = [...orphanIds].map(id => ({
+    id, facilityName: `（削除済み施設: ${id.slice(0, 8)}...）`, facilityCode: '', isActive: false, clientId: selectedClientId.value
+  }))
+  return [...clientFacilities.value, ...orphanFacilities]
+})
+
 // clientsがロードされたらデフォルト選択
 watch(() => masterStore.clients, (clients) => {
   if (!selectedClientId.value && clients.length > 0) {
@@ -69,8 +82,8 @@ const calculatedSummaries = computed(() => {
   if (!selectedClientId.value || !selectedYearMonth.value) return []
 
   const facilities = selectedFacilityId.value
-    ? clientFacilities.value.filter(f => f.id === selectedFacilityId.value)
-    : clientFacilities.value
+    ? allFacilitiesForSummary.value.filter(f => f.id === selectedFacilityId.value)
+    : allFacilitiesForSummary.value
 
   return facilities.map(facility => {
     let records

@@ -62,13 +62,17 @@ export function previewFacilityResolution(records, facilities) {
         facilityBreakdown[result.facility.id] = { facilityId: result.facility.id, facilityName: result.facility.facilityName, count: 0 }
       }
       facilityBreakdown[result.facility.id].count++
-    } else {
-      const allErrors = [...rowErrors]
+    } else if (rowErrors.length > 0) {
+      // バリデーションエラー（日付不正等）→ invalid
       if (!result.success) {
-        allErrors.push({ row: rowNum, column: 'roomCode', message: result.error, value: record.roomCode, severity: 'error' })
+        rowErrors.push({ row: rowNum, column: 'roomCode', message: result.error, value: record.roomCode, severity: 'warning' })
       }
-      processedRecords.push({ ...record, rowNumber: rowNum, facilityId: result.success ? result.facility.id : null, facilityName: result.success ? result.facility.facilityName : null, isValid: false, error: allErrors.map(e => e.message).join('; ') })
-      errors.push(...allErrors)
+      processedRecords.push({ ...record, rowNumber: rowNum, facilityId: result.success ? result.facility.id : null, facilityName: result.success ? result.facility.facilityName : null, isValid: false, error: rowErrors.map(e => e.message).join('; ') })
+      errors.push(...rowErrors)
+    } else if (!result.success) {
+      // EDGE-07: 施設マッチ失敗のみ → 警告付きでisValid=true（そのまま保存可能）
+      errors.push({ row: rowNum, column: 'roomCode', message: result.error, value: record.roomCode, severity: 'warning' })
+      processedRecords.push({ ...record, rowNumber: rowNum, facilityId: null, facilityName: '（未マッチ）', isValid: true, warning: result.error })
     }
   }
   return { records: processedRecords, facilityBreakdown: Object.values(facilityBreakdown), errors }
