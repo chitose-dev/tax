@@ -245,7 +245,7 @@ const FacilityFormInline = {
     const form = ref({ clientId: '', facilityCode: '', facilityName: '', roomCodePrefix: '', address: '', phone: '', capacity: null, notes: '', isActive: true })
     onMounted(() => {
       if (props.facility) {
-        form.value = { clientId: props.facility.clientId||'', facilityCode: props.facility.facilityCode||'', facilityName: props.facility.facilityName||'', roomCodePrefix: props.facility.roomCodePrefix||'', address: props.facility.address||'', phone: props.facility.phone||'', capacity: props.facility.capacity||null, notes: props.facility.notes||'', isActive: props.facility.isActive !== false }
+        form.value = { clientId: props.facility.clientId||'', facilityCode: props.facility.facilityCode||'', facilityName: props.facility.facilityName||'', roomCodePrefix: props.facility.roomCodePrefix||'', address: props.facility.address||'', phone: props.facility.phone||'', capacity: props.facility.capacity??null, notes: props.facility.notes||'', isActive: props.facility.isActive !== false }
       } else if (props.defaultClientId) {
         form.value.clientId = props.defaultClientId
       }
@@ -293,7 +293,7 @@ const RoomFormInline = {
       return f?.roomCodePrefix || ''
     })
     onMounted(() => {
-      if (props.room) form.value = { facilityId: props.room.facilityId||'', roomCode: props.room.roomCode||'', roomName: props.room.roomName||'', capacity: props.room.capacity||null, notes: props.room.notes||'', isActive: props.room.isActive !== false }
+      if (props.room) form.value = { facilityId: props.room.facilityId||'', roomCode: props.room.roomCode||'', roomName: props.room.roomName||'', capacity: props.room.capacity??null, notes: props.room.notes||'', isActive: props.room.isActive !== false }
     })
     return { form, selectedPrefix, submit() {
       if (!form.value.facilityId) { alert('施設を選択してください'); return }
@@ -304,9 +304,10 @@ const RoomFormInline = {
         alert(`部屋コードは「${selectedPrefix.value}」で始まる必要があります`)
         return
       }
-      // null/undefinedのフィールドを除去（API 422防止）
+      // ROOM-05: null/undefinedのフィールドを除去（capacityは空ならnullとして送信）
       const data = { facilityId: form.value.facilityId, roomCode: form.value.roomCode, roomName: form.value.roomName }
-      if (form.value.capacity != null) data.capacity = form.value.capacity
+      if (form.value.capacity != null && form.value.capacity !== '') data.capacity = form.value.capacity
+      else data.capacity = null
       if (form.value.notes?.trim()) data.notes = form.value.notes
       data.isActive = form.value.isActive
       emit('save', data)

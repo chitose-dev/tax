@@ -41,7 +41,7 @@ export function previewFacilityResolution(records, facilities) {
       const ci = new Date(record.checkInDate)
       const co = new Date(record.checkOutDate)
       if (!isNaN(ci.getTime()) && !isNaN(co.getTime()) && co <= ci) {
-        rowErrors.push({ row: rowNum, column: 'checkOutDate', message: `終了日が開始日以前です: ${record.checkInDate} 〜 ${record.checkOutDate}`, value: record.checkOutDate, severity: 'error' })
+        rowErrors.push({ row: rowNum, column: 'checkOutDate', message: 'チェックアウト日はチェックイン日より後の日付にしてください', value: record.checkOutDate, severity: 'error' })
       }
     }
 

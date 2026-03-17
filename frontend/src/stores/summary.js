@@ -115,6 +115,8 @@ export const useSummaryStore = defineStore('summary', () => {
     const { api } = await import('@/lib/api')
     const filename = `export_${yearMonth}.${format}`
     await api.download('/summaries/export', { clientId, yearMonth, format }, filename)
+    // SUM-10: エクスポートログをローカルに保存して画面遷移後も表示
+    addExportLog({ clientId, fileName: filename, yearMonth })
   }
 
   function saveExportLogs() {

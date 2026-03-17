@@ -152,6 +152,11 @@ const summaryError = ref('')
 
 async function deleteSummary(item) {
   if (!item.summaryId) return
+  // SUM-06~09: 一般ユーザーは確定済みの集計を削除できない
+  if (!authStore.isAdmin && item.status === 'confirmed') {
+    summaryError.value = '確定済みの集計は削除できません'
+    return
+  }
   const label = item.facilityName + ' ' + selectedYearMonth.value
   if (!confirm(`「${label}」の集計を削除しますか？`)) return
   summaryError.value = ''
@@ -224,7 +229,7 @@ async function saveAndConfirm(item) {
             <label>施設</label>
             <select v-model="selectedFacilityId">
               <option value="">全施設</option>
-              <option v-for="f in clientFacilities" :key="f.id" :value="f.id">{{ f.facilityName }}</option>
+              <option v-for="f in allFacilitiesForSummary" :key="f.id" :value="f.id">{{ f.facilityName }}</option>
             </select>
           </div>
           <div class="form-group">

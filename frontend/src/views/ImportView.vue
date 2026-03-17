@@ -70,7 +70,7 @@ async function handleFile(file) {
   }
   // CSV-14: ファイルサイズ上限チェック (10MB)
   if (file.size > 10 * 1024 * 1024) {
-    error.value = 'ファイルサイズが10MBを超えています。ファイルを分割してください。'
+    error.value = 'ファイルサイズが大きすぎます（上限10MB）'
     return
   }
   selectedFile.value = file
@@ -79,12 +79,14 @@ async function handleFile(file) {
     const result = await parseFile(file)
     // CSV-15: 行数上限チェック
     if (result.rows.length > 10000) {
-      error.value = `データ行数が${result.rows.length}行あります。10,000行以内にしてください。`
+      error.value = '行数が多すぎます（上限10,000行）'
+      selectedFile.value = null
       return
     }
-    // CSV-16: データ行が0件チェック
+    // CSV-16: データ行が0件の場合はエラー表示（ファイル再選択可能にする）
     if (result.rows.length === 0) {
-      error.value = 'データ行がありません'
+      error.value = 'ヘッダー行のみでデータ行がありません。データを含むファイルを選択してください。'
+      selectedFile.value = null
       return
     }
     parsedHeaders.value = result.headers
@@ -296,14 +298,18 @@ function reset() {
           <button class="btn-secondary btn-sm" @click="step = 2">マッピングに戻る</button>
         </div>
         <div class="card-body">
-          <div class="stats-grid mb-4" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+          <div class="stats-grid mb-4" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
             <div class="alert alert-success" style="margin:0;text-align:center">
               <div style="font-size:24px;font-weight:700">{{ previewResult.records.filter(r=>r.isValid).length }}</div>
               <div class="text-sm">有効レコード</div>
             </div>
             <div class="alert alert-error" style="margin:0;text-align:center">
-              <div style="font-size:24px;font-weight:700">{{ previewResult.errors.length }}</div>
+              <div style="font-size:24px;font-weight:700">{{ previewResult.errors.filter(e => e.severity === 'error').length }}</div>
               <div class="text-sm">エラー</div>
+            </div>
+            <div class="alert" style="margin:0;text-align:center;background:#fff8e1;border:1px solid #ffc107">
+              <div style="font-size:24px;font-weight:700">{{ previewResult.errors.filter(e => e.severity === 'warning').length }}</div>
+              <div class="text-sm">警告</div>
             </div>
             <div class="alert alert-info" style="margin:0;text-align:center">
               <div style="font-size:24px;font-weight:700">{{ previewResult.facilityBreakdown.length }}</div>
@@ -326,14 +332,20 @@ function reset() {
             </div>
           </div>
 
+          <!-- CSV-17/18: エラー・警告一覧 -->
           <div v-if="previewResult.errors.length > 0" style="margin-top:16px">
-            <h3 style="font-size:14px;font-weight:600;margin-bottom:8px;color:var(--color-danger)">エラー一覧</h3>
+            <h3 style="font-size:14px;font-weight:600;margin-bottom:8px">エラー・警告一覧</h3>
             <div class="table-wrapper">
               <table>
-                <thead><tr><th>行</th><th>部屋コード</th><th>エラー</th></tr></thead>
+                <thead><tr><th>行</th><th>種別</th><th>部屋コード</th><th>内容</th></tr></thead>
                 <tbody>
                   <tr v-for="(err, i) in previewResult.errors.slice(0, 20)" :key="i">
                     <td>{{ err.row }}</td>
+                    <td>
+                      <span :class="['badge', err.severity === 'warning' ? 'badge-draft' : 'badge-error']">
+                        {{ err.severity === 'warning' ? '警告' : 'エラー' }}
+                      </span>
+                    </td>
                     <td>{{ err.value }}</td>
                     <td class="text-sm">{{ err.message }}</td>
                   </tr>

@@ -52,32 +52,24 @@ export const useImportStore = defineStore('import', () => {
         const taxablePersons = (rec.adults || 0) + (rec.children || 0)
         const totalNights = rec.nights || 0
 
-        // 日割り振り分け: 各宿泊日が属する月ごとにレコード分割
-        const monthlyNights = {}
-        if (rec.checkInDate && totalNights > 0) {
-          const [ciY, ciM, ciD] = rec.checkInDate.split('-').map(Number)
-          for (let d = 0; d < totalNights; d++) {
-            const stayDate = new Date(ciY, ciM - 1, ciD + d)
-            const ym = `${stayDate.getFullYear()}-${String(stayDate.getMonth() + 1).padStart(2, '0')}`
-            monthlyNights[ym] = (monthlyNights[ym] || 0) + 1
-          }
-        } else {
-          const ym = rec.checkInDate ? rec.checkInDate.substring(0, 7) : ''
-          monthlyNights[ym] = totalNights
+        // CSV-06/EDGE-01/EDGE-02: yearMonthはチェックアウト月に統一
+        let yearMonth = ''
+        if (rec.checkOutDate) {
+          yearMonth = rec.checkOutDate.substring(0, 7)
+        } else if (rec.checkInDate) {
+          yearMonth = rec.checkInDate.substring(0, 7)
         }
 
-        for (const [yearMonth, monthNights] of Object.entries(monthlyNights)) {
-          const taxAmount = taxablePersons * monthNights * 200
-          lodgingRecords.value.push({
-            id: 'rec-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
-            clientId, facilityId: rec.facilityId || '', roomCode: rec.roomCode || '',
-            checkInDate: rec.checkInDate, checkOutDate: rec.checkOutDate,
-            nights: monthNights, totalNights, adults: rec.adults || 0,
-            children: rec.children || 0, infants: rec.infants || 0,
-            taxablePersons, taxAmount, yearMonth,
-            importLogId: logId, createdAt: now
-          })
-        }
+        const taxAmount = taxablePersons * totalNights * 200
+        lodgingRecords.value.push({
+          id: 'rec-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+          clientId, facilityId: rec.facilityId || '', roomCode: rec.roomCode || '',
+          checkInDate: rec.checkInDate, checkOutDate: rec.checkOutDate,
+          nights: totalNights, totalNights, adults: rec.adults || 0,
+          children: rec.children || 0, infants: rec.infants || 0,
+          taxablePersons, taxAmount, yearMonth,
+          importLogId: logId, createdAt: now
+        })
       }
 
       dates.sort()
