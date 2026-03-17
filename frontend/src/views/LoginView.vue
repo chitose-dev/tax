@@ -1,5 +1,5 @@
 <script setup>
-import { ref, nextTick, watch } from 'vue'
+import { ref, computed, nextTick, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter, useRoute } from 'vue-router'
 
@@ -18,27 +18,34 @@ watch(() => authStore.isAuthenticated, (authenticated) => {
 const useMock = import.meta.env.VITE_USE_MOCK === 'true'
 const email = ref(useMock ? 'admin@example.com' : '')
 const password = ref('')
-const errors = ref({})
-const loginError = ref('')
+const validationErrors = ref({})
 const isLoading = ref(false)
+const loginAttempted = ref(false)
+
+// authStore.errorを直接監視してエラー表示
+const loginError = computed(() => {
+  if (!loginAttempted.value) return ''
+  return authStore.error || ''
+})
 
 async function handleLogin() {
-  errors.value = {}
-  loginError.value = ''
-  if (!email.value) errors.value.email = 'メールアドレスを入力してください'
-  if (!password.value) errors.value.password = 'パスワードを入力してください'
-  if (Object.keys(errors.value).length > 0) return
+  validationErrors.value = {}
+  loginAttempted.value = false
+  authStore.error = null
+
+  if (!email.value) validationErrors.value.email = 'メールアドレスを入力してください'
+  if (!password.value) validationErrors.value.password = 'パスワードを入力してください'
+  if (Object.keys(validationErrors.value).length > 0) return
 
   isLoading.value = true
+  loginAttempted.value = true
   try {
     await authStore.login(email.value, password.value)
-    await nextTick()
     const redirect = route.query.redirect || '/'
     await router.replace(redirect)
   } catch (e) {
-    console.error('Login error:', e)
-    loginError.value = authStore.error || e.message || 'ログインに失敗しました'
-    await nextTick()
+    // authStore.error は login() 内でセット済み
+    // loginAttempted=true + computed loginError で自動表示
   } finally {
     isLoading.value = false
   }
@@ -56,14 +63,14 @@ async function handleLogin() {
         <div class="form-group">
           <label for="email">メールアドレス</label>
           <input id="email" v-model="email" type="email" placeholder="example@example.com" autocomplete="email" />
-          <span v-if="errors.email" class="error-message">{{ errors.email }}</span>
+          <span v-if="validationErrors.email" class="error-message">{{ validationErrors.email }}</span>
         </div>
         <div class="form-group">
           <label for="password">パスワード</label>
           <input id="password" v-model="password" type="password" placeholder="パスワード" autocomplete="current-password" />
-          <span v-if="errors.password" class="error-message">{{ errors.password }}</span>
+          <span v-if="validationErrors.password" class="error-message">{{ validationErrors.password }}</span>
         </div>
-        <div v-if="loginError" class="alert alert-error">{{ loginError }}</div>
+        <div v-if="loginError" class="alert alert-error" style="margin-top:12px">{{ loginError }}</div>
         <button type="submit" class="btn-primary" :disabled="isLoading" style="width:100%;margin-top:8px">
           <span v-if="isLoading">ログイン中...</span>
           <span v-else>ログイン</span>
