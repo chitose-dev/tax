@@ -32,7 +32,10 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function login(email, password) {
     error.value = null
-    isLoading.value = true
+    // Note: isLoading はここでは変更しない。
+    // isLoading は初期認証チェック専用。ログイン中に true にすると
+    // App.vue がローディング画面に切り替わり、LoginView がアンマウントされて
+    // エラーメッセージが消えるバグが発生する。
     try {
       if (!email || !password) {
         throw new Error('メールアドレスとパスワードを入力してください')
@@ -70,8 +73,6 @@ export const useAuthStore = defineStore('auth', () => {
       }
       error.value = messages[code] || 'ログインに失敗しました'
       throw e
-    } finally {
-      isLoading.value = false
     }
   }
 
