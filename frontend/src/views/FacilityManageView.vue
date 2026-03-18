@@ -138,7 +138,7 @@ function getFacilityName(facilityId) {
     <div v-if="activeTab === 'facilities'" class="card">
       <div class="card-header">
         <h2>施設一覧</h2>
-        <button v-if="authStore.isAdmin || authStore.clientId" class="btn-primary btn-sm" @click="openFacilityForm()">+ 新規登録</button>
+        <button v-if="authStore.isAdmin" class="btn-primary btn-sm" @click="openFacilityForm()">+ 新規登録</button>
       </div>
       <div class="card-body" style="padding:0">
         <div class="table-wrapper">
@@ -169,7 +169,7 @@ function getFacilityName(facilityId) {
     <div v-if="activeTab === 'rooms'" class="card">
       <div class="card-header">
         <h2>部屋一覧</h2>
-        <button v-if="authStore.isAdmin || authStore.clientId" class="btn-primary btn-sm" @click="openRoomForm()">+ 新規登録</button>
+        <button v-if="authStore.isAdmin" class="btn-primary btn-sm" @click="openRoomForm()">+ 新規登録</button>
       </div>
       <div class="card-body">
         <div class="form-group" style="max-width:300px;margin-bottom:16px">
@@ -304,10 +304,9 @@ const RoomFormInline = {
         alert(`部屋コードは「${selectedPrefix.value}」で始まる必要があります`)
         return
       }
-      // ROOM-05: null/undefinedのフィールドを除去（capacityは空ならnullとして送信）
+      // ROOM-05: null/undefinedのフィールドを除去（capacityは空なら送信しない）
       const data = { facilityId: form.value.facilityId, roomCode: form.value.roomCode, roomName: form.value.roomName }
-      if (form.value.capacity != null && form.value.capacity !== '') data.capacity = form.value.capacity
-      else data.capacity = null
+      if (form.value.capacity != null && form.value.capacity !== '') data.capacity = parseInt(form.value.capacity)
       if (form.value.notes?.trim()) data.notes = form.value.notes
       data.isActive = form.value.isActive
       emit('save', data)
