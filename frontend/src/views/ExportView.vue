@@ -59,7 +59,7 @@ async function downloadCSV(summary) {
 
   const rows = [
     ['特別徴収義務者番号', '宿泊施設番号', '宿泊施設名称', '課税期間開始', '課税期間終了', '課税人泊数', '税率', '税額'],
-    [clientCode, facilityCode, facilityName, getPeriodStart(summary), getPeriodEnd(summary), summary.taxablePersonNights ?? summary.totalTaxablePersons, 200, summary.taxAmount ?? summary.totalTaxAmount]
+    [clientCode, facilityCode, facilityName, getPeriodStart(summary), getPeriodEnd(summary), summary.taxablePersonNights, 200, summary.taxAmount]
   ]
   const csv = rows.map(r => r.join(',')).join('\n')
   const bom = '\uFEFF'
@@ -77,6 +77,7 @@ async function downloadCSV(summary) {
     await api.get('/summaries/export', {
       clientId: summary.clientId,
       yearMonth: summary.yearMonth,
+      facilityId: summary.facilityId,
       format: 'csv'
     })
     // APIからステータス更新を反映
@@ -95,7 +96,7 @@ async function downloadCSV(summary) {
     periodStart: getPeriodStart(summary),
     periodEnd: getPeriodEnd(summary),
     fileName: a.download,
-    taxAmount: summary.taxAmount ?? summary.totalTaxAmount,
+    taxAmount: summary.taxAmount,
     createdBy: authStore.user?.uid || 'user-1'
   })
 }
@@ -140,8 +141,8 @@ async function downloadCSV(summary) {
               <td>{{ s.yearMonth }}</td>
               <td>{{ getFacilityName(s.facilityId) }}</td>
               <td>{{ s.periodType === 'monthly' ? '月次' : '3か月' }}</td>
-              <td>{{ (s.taxablePersonNights ?? s.totalTaxablePersons)?.toLocaleString() }}</td>
-              <td style="font-weight:600">&yen;{{ (s.taxAmount ?? s.totalTaxAmount)?.toLocaleString() }}</td>
+              <td>{{ (s.taxablePersonNights)?.toLocaleString() }}</td>
+              <td style="font-weight:600">&yen;{{ (s.taxAmount)?.toLocaleString() }}</td>
               <td><span :class="['badge', 'badge-' + s.status]">{{ s.status === 'exported' ? '出力済' : '確定' }}</span></td>
               <td style="text-align:right;white-space:nowrap">
                 <button class="btn-primary btn-sm" @click="downloadCSV(s)">
