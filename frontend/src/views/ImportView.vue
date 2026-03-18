@@ -15,6 +15,7 @@ const masterStore = useMasterStore()
 const step = ref(1) // 1: アップロード, 2: 列マッピング, 3: プレビュー
 const isLoading = ref(false)
 const error = ref('')
+const duplicateWarning = ref('')
 const dragOver = ref(false)
 
 // Step 1: ファイル
@@ -168,16 +169,21 @@ async function executeImport() {
   } catch (e) {
     if (e.status === 409) {
       // 重複ファイル — 強制インポートするか確認
-      if (confirm('同名ファイルが既にインポートされています。重複を無視して強制インポートしますか？')) {
-        try {
-          await importStore.confirmImport(selectedClientId.value, validRecords, file, true)
-          router.push('/import/confirm')
-        } catch (e2) {
-          error.value = e2.data?.detail || e2.message || 'インポートに失敗しました'
-        }
-      }
+      duplicateWarning.value = e.data?.detail || e.message || '同名ファイルが既にインポートされています。'
       return
     }
+    error.value = e.data?.detail || e.message || 'インポートに失敗しました'
+  }
+}
+
+async function forceImport() {
+  duplicateWarning.value = ''
+  const validRecords = previewResult.value.records.filter(r => r.isValid)
+  const file = importStore.rawFile || selectedFile.value
+  try {
+    await importStore.confirmImport(selectedClientId.value, validRecords, file, true)
+    router.push('/import/confirm')
+  } catch (e) {
     error.value = e.data?.detail || e.message || 'インポートに失敗しました'
   }
 }
@@ -207,6 +213,14 @@ function reset() {
       <div :class="['step-item', { active: step >= 3 }]">3. 確認・取込</div>
     </div>
 
+    <div v-if="duplicateWarning" class="card mb-4" style="border-left: 4px solid var(--warning-color, #f39c12); background: #fef9e7; padding: 16px">
+      <p style="margin:0 0 8px 0; font-weight:600; color: #856404">⚠️ 重複ファイル検出</p>
+      <p style="margin:0 0 12px 0">{{ duplicateWarning }}</p>
+      <div style="display:flex;gap:8px">
+        <button class="btn-primary btn-sm" @click="forceImport">強制インポート</button>
+        <button class="btn-sm" style="background:#ccc" @click="duplicateWarning = ''">キャンセル</button>
+      </div>
+    </div>
     <div v-if="error" class="alert alert-error">{{ error }}</div>
 
     <!-- Step 1: ファイルアップロード -->
