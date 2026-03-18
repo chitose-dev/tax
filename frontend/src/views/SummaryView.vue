@@ -12,6 +12,12 @@ const masterStore = useMasterStore()
 
 const TAX_RATE = 200
 
+function getQuarterLabel(yearMonth) {
+  const [y, m] = yearMonth.split('-').map(Number)
+  const q = Math.ceil(m / 3)
+  return `${y}-Q${q}`
+}
+
 function getLastDayOfMonth(yearMonth) {
   const [y, m] = yearMonth.split('-').map(Number)
   const lastDay = new Date(y, m, 0).getDate()
@@ -21,6 +27,7 @@ function getLastDayOfMonth(yearMonth) {
 const selectedClientId = ref(authStore.clientId || '')
 const selectedFacilityId = ref('')
 const selectedYearMonth = ref('')
+const selectedQuarter = ref('')
 const periodType = ref('monthly')
 
 const clientFacilities = computed(() =>
@@ -77,9 +84,34 @@ const availableMonths = computed(() => {
   return [...months].sort().reverse()
 })
 
+// 利用可能な四半期一覧
+const availableQuarters = computed(() => {
+  const quarters = new Set()
+  availableMonths.value.forEach(ym => {
+    const [y, m] = ym.split('-').map(Number)
+    const q = Math.ceil(m / 3)
+    quarters.add(`${y}-Q${q}`)
+  })
+  return [...quarters].sort().reverse().map(q => ({
+    value: q,
+    label: q.replace('-Q1', '年 1-3月').replace('-Q2', '年 4-6月').replace('-Q3', '年 7-9月').replace('-Q4', '年 10-12月')
+  }))
+})
+
+// 四半期の構成月を取得
+function getQuarterMonths(yearQuarter) {
+  const [y, qStr] = yearQuarter.split('-Q')
+  const q = parseInt(qStr)
+  const start = (q - 1) * 3 + 1
+  return [0, 1, 2].map(i => `${y}-${String(start + i).padStart(2, '0')}`)
+}
+
 // 集計結果を計算
 const calculatedSummaries = computed(() => {
-  if (!selectedClientId.value || !selectedYearMonth.value) return []
+  const isQuarterly = periodType.value === 'quarterly'
+  if (!selectedClientId.value) return []
+  if (isQuarterly && !selectedQuarter.value) return []
+  if (!isQuarterly && !selectedYearMonth.value) return []
 
   const facilities = selectedFacilityId.value
     ? allFacilitiesForSummary.value.filter(f => f.id === selectedFacilityId.value)
@@ -87,20 +119,12 @@ const calculatedSummaries = computed(() => {
 
   return facilities.map(facility => {
     let records
-    if (periodType.value === 'quarterly') {
-      const [y, m] = selectedYearMonth.value.split('-').map(Number)
-      const months = []
-      for (let i = 0; i < 3; i++) {
-        const mm = m + i
-        const yy = y + Math.floor((mm - 1) / 12)
-        const mmm = ((mm - 1) % 12) + 1
-        months.push(`${yy}-${String(mmm).padStart(2, '0')}`)
-      }
+    if (isQuarterly) {
+      const months = getQuarterMonths(selectedQuarter.value)
       records = importStore.lodgingRecords.filter(r =>
         r.clientId === selectedClientId.value && r.facilityId === facility.id && months.includes(r.yearMonth)
       )
     } else {
-      // computedの中ではasync不可 → 同期的にフィルタリング
       records = importStore.lodgingRecords.filter(r =>
         r.clientId === selectedClientId.value && r.facilityId === facility.id && r.yearMonth === selectedYearMonth.value
       )
@@ -124,10 +148,11 @@ const calculatedSummaries = computed(() => {
     const taxAmount = taxablePersonNights * TAX_RATE
 
     // 既存の集計状態を確認
-    const existing = summaryStore.summaries.find(
-      s => s.clientId === selectedClientId.value && s.facilityId === facility.id &&
-           s.yearMonth === selectedYearMonth.value
-    )
+    const existing = summaryStore.summaries.find(s => {
+      if (s.clientId !== selectedClientId.value || s.facilityId !== facility.id) return false
+      if (isQuarterly) return s.periodType === 'quarterly' && s.yearQuarter === selectedQuarter.value
+      return (!s.periodType || s.periodType === 'monthly') && s.yearMonth === selectedYearMonth.value
+    })
 
     return {
       facilityId: facility.id,
@@ -172,22 +197,13 @@ async function saveAndConfirm(item) {
   summaryError.value = ''
   try {
     // 保存（generate）→ 即確定
+    const isQuarterly = periodType.value === 'quarterly'
     const summaryId = await summaryStore.saveSummary({
       clientId: selectedClientId.value,
       facilityId: item.facilityId,
       periodType: periodType.value,
-      periodStart: selectedYearMonth.value + '-01',
-      periodEnd: getLastDayOfMonth(selectedYearMonth.value),
-      yearMonth: selectedYearMonth.value,
-      totalRecords: item.totalRecords,
-      totalNights: item.totalNights,
-      totalAdults: item.totalAdults,
-      totalChildren: item.totalChildren,
-      totalInfants: item.totalInfants,
-      taxablePersonNights: item.taxablePersonNights,
-      taxAmount: item.taxAmount,
-      status: 'draft',
-      createdBy: authStore.user?.uid || 'user-1'
+      yearMonth: isQuarterly ? null : selectedYearMonth.value,
+      yearQuarter: isQuarterly ? selectedQuarter.value : null,
     })
     // 保存成功したら即確定
     if (summaryId) {
@@ -232,7 +248,7 @@ async function saveAndConfirm(item) {
               <option v-for="f in allFacilitiesForSummary" :key="f.id" :value="f.id">{{ f.facilityName }}</option>
             </select>
           </div>
-          <div class="form-group">
+          <div v-if="periodType !== 'quarterly'" class="form-group">
             <label>対象年月</label>
             <select v-model="selectedYearMonth">
               <option value="">選択してください</option>
@@ -243,7 +259,14 @@ async function saveAndConfirm(item) {
             <label>集計期間</label>
             <select v-model="periodType">
               <option value="monthly">月次</option>
-              <option value="quarterly">3か月（選択月から）</option>
+              <option value="quarterly">四半期</option>
+            </select>
+          </div>
+          <div v-if="periodType === 'quarterly'" class="form-group">
+            <label>四半期</label>
+            <select v-model="selectedQuarter">
+              <option value="">選択してください</option>
+              <option v-for="q in availableQuarters" :key="q.value" :value="q.value">{{ q.label }}</option>
             </select>
           </div>
         </div>
@@ -251,9 +274,9 @@ async function saveAndConfirm(item) {
     </div>
 
     <!-- 集計結果 -->
-    <div v-if="selectedYearMonth && calculatedSummaries.length > 0" class="card">
+    <div v-if="(selectedYearMonth || selectedQuarter) && calculatedSummaries.length > 0" class="card">
       <div class="card-header">
-        <h2>集計結果 - {{ selectedYearMonth }}{{ periodType === 'quarterly' ? '（3か月）' : '' }}</h2>
+        <h2>集計結果 - {{ periodType === 'quarterly' ? selectedQuarter.replace('-Q1', '年 Q1(1-3月)').replace('-Q2', '年 Q2(4-6月)').replace('-Q3', '年 Q3(7-9月)').replace('-Q4', '年 Q4(10-12月)') : selectedYearMonth }}</h2>
       </div>
       <div class="card-body" style="padding:0">
         <div class="table-wrapper">
@@ -304,11 +327,11 @@ async function saveAndConfirm(item) {
       </div>
     </div>
 
-    <div v-else-if="selectedYearMonth" class="card">
+    <div v-else-if="selectedYearMonth || selectedQuarter" class="card">
       <div class="card-body empty-state"><p>該当するデータがありません</p></div>
     </div>
     <div v-else class="card">
-      <div class="card-body empty-state"><p>年月を選択してください</p></div>
+      <div class="card-body empty-state"><p>{{ periodType === 'quarterly' ? '四半期を選択してください' : '年月を選択してください' }}</p></div>
     </div>
   </div>
 </template>

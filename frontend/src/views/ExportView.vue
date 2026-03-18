@@ -39,6 +39,17 @@ const confirmedSummaries = computed(() =>
   )
 )
 
+// 二重計上警告: 同じ期間で月次exportedと四半期が共存
+function hasDuplicateExportWarning(summary) {
+  if (summary.periodType !== 'quarterly' || !summary.quarterMonths) return false
+  return summary.quarterMonths.some(ym =>
+    summaryStore.summaries.some(s =>
+      s.clientId === summary.clientId && s.facilityId === summary.facilityId &&
+      s.periodType === 'monthly' && s.yearMonth === ym && s.status === 'exported'
+    )
+  )
+}
+
 function getFacilityName(facilityId) {
   return masterStore.facilities.find(f => f.id === facilityId)?.facilityName || facilityId
 }
@@ -67,19 +78,25 @@ async function downloadCSV(summary) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `eLTAX_${summary.yearMonth}_${facilityCode || 'export'}.csv`
+  const periodLabel = summary.yearQuarter || summary.yearMonth || 'export'
+  a.download = `eLTAX_${periodLabel}_${facilityCode || 'export'}.csv`
   a.click()
   URL.revokeObjectURL(url)
 
   // バックエンドAPIでexportedステータスをDB保存
   try {
     const { api } = await import('@/lib/api')
-    await api.get('/summaries/export', {
+    const exportParams = {
       clientId: summary.clientId,
-      yearMonth: summary.yearMonth,
       facilityId: summary.facilityId,
       format: 'csv'
-    })
+    }
+    if (summary.yearQuarter) {
+      exportParams.yearQuarter = summary.yearQuarter
+    } else {
+      exportParams.yearMonth = summary.yearMonth
+    }
+    await api.get('/summaries/export', exportParams)
     // APIからステータス更新を反映
     await summaryStore.loadSummaries(selectedClientId.value)
   } catch (e) {
@@ -138,13 +155,14 @@ async function downloadCSV(summary) {
           </thead>
           <tbody>
             <tr v-for="s in confirmedSummaries" :key="s.id">
-              <td>{{ s.yearMonth }}</td>
+              <td>{{ s.yearQuarter || s.yearMonth }}</td>
               <td>{{ getFacilityName(s.facilityId) }}</td>
-              <td>{{ s.periodType === 'monthly' ? '月次' : '3か月' }}</td>
+              <td>{{ s.periodType === 'quarterly' ? '四半期' : '月次' }}</td>
               <td>{{ (s.taxablePersonNights)?.toLocaleString() }}</td>
               <td style="font-weight:600">&yen;{{ (s.taxAmount)?.toLocaleString() }}</td>
               <td><span :class="['badge', 'badge-' + s.status]">{{ s.status === 'exported' ? '出力済' : '確定' }}</span></td>
               <td style="text-align:right;white-space:nowrap">
+                <span v-if="hasDuplicateExportWarning(s)" style="color:var(--warning-color,#f39c12);font-size:0.85em;margin-right:6px" title="同期間の月次集計が既に出力済みです。二重申告にご注意ください。">⚠️ 月次出力済</span>
                 <button class="btn-primary btn-sm" @click="downloadCSV(s)">
                   {{ s.status === 'exported' ? '再ダウンロード' : 'CSV出力' }}
                 </button>
