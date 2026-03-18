@@ -166,6 +166,18 @@ async function executeImport() {
     await importStore.confirmImport(selectedClientId.value, validRecords, file)
     router.push('/import/confirm')
   } catch (e) {
+    if (e.status === 409) {
+      // 重複ファイル — 強制インポートするか確認
+      if (confirm('同名ファイルが既にインポートされています。重複を無視して強制インポートしますか？')) {
+        try {
+          await importStore.confirmImport(selectedClientId.value, validRecords, file, true)
+          router.push('/import/confirm')
+        } catch (e2) {
+          error.value = e2.data?.detail || e2.message || 'インポートに失敗しました'
+        }
+      }
+      return
+    }
     error.value = e.data?.detail || e.message || 'インポートに失敗しました'
   }
 }

@@ -40,7 +40,7 @@ export const useImportStore = defineStore('import', () => {
     mappedRecords.value = records
   }
 
-  async function confirmImport(clientId, records, fileOverride) {
+  async function confirmImport(clientId, records, fileOverride, force = false) {
     if (USE_MOCK) {
       const { mockLodgingRecords } = await import('@/lib/mock-data')
       const logId = 'log-' + Date.now()
@@ -99,7 +99,8 @@ export const useImportStore = defineStore('import', () => {
       const formData = new FormData()
       formData.append('file', uploadFile)
 
-      const result = await api.upload(`/lodging-records/import?clientId=${encodeURIComponent(clientId)}`, formData)
+      const forceParam = force ? '&force=true' : ''
+      const result = await api.upload(`/lodging-records/import?clientId=${encodeURIComponent(clientId)}${forceParam}`, formData)
       clearImportState()
       // インポートログの更新は非致命的（失敗してもインポート自体は成功）
       try { await fetchImportLogs(clientId) } catch (_) { /* ignore */ }
