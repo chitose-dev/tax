@@ -54,7 +54,7 @@ async function request(method, path, { body, params, isFormData } = {}) {
   if (!res.ok) {
     let data
     try { data = await res.json() } catch { data = null }
-    throw new ApiError(data?.message || `APIエラー (${res.status})`, res.status, data)
+    throw new ApiError(data?.detail || data?.message || `APIエラー (${res.status})`, res.status, data)
   }
 
   // Handle empty responses (204 etc.)
