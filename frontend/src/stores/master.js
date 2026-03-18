@@ -151,6 +151,7 @@ export const useMasterStore = defineStore('master', () => {
 
   async function fetchFacilities(clientId, force = false) {
     if (USE_MOCK) return
+    // clientId未指定（全件取得）時のみキャッシュ有効。clientId指定時は常にAPI取得（混在防止）
     if (!force && !clientId && _isCacheValid('facilities') && facilities.value.length) return
     isLoading.value = true
     try {

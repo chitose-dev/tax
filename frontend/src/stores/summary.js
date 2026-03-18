@@ -58,8 +58,7 @@ export const useSummaryStore = defineStore('summary', () => {
     try {
       const { api } = await import('@/lib/api')
       const result = await api.post('/summaries/generate', data)
-      // Refresh summaries list
-      if (data.clientId) await loadSummaries(data.clientId)
+      // Don't refresh here — caller will refresh after confirm
       // generate returns array of summaries — find the one matching our facilityId
       if (Array.isArray(result)) {
         const match = result.find(s => s.facilityId === data.facilityId)

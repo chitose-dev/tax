@@ -173,7 +173,12 @@ export const useImportStore = defineStore('import', () => {
     try {
       const { api } = await import('@/lib/api')
       await api.delete(`/import-logs/${logId}`)
+      const deletedLog = importLogs.value.find(l => l.id === logId)
       importLogs.value = importLogs.value.filter(l => l.id !== logId)
+      // Re-fetch lodging records to reflect deletion
+      if (deletedLog?.clientId) {
+        await fetchLodgingRecords(deletedLog.clientId)
+      }
     } finally { isLoading.value = false }
   }
 
