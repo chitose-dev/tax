@@ -1,13 +1,52 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useMasterStore } from '@/stores/master'
 
 const authStore = useAuthStore()
 const masterStore = useMasterStore()
 
+const loading = ref(true)
+
 const myClient = computed(() => {
   return masterStore.getClientById(authStore.clientId)
+})
+
+// 一般ユーザーでも確実にクライアントデータを取得
+async function ensureClientLoaded() {
+  if (!authStore.clientId) {
+    loading.value = false
+    return
+  }
+  if (myClient.value) {
+    loading.value = false
+    return
+  }
+  try {
+    await masterStore.fetchClients(true)
+    // fetchClientsで取得できなかった場合、個別に取得を試みる
+    if (!myClient.value) {
+      const { api } = await import('@/lib/api')
+      const client = await api.get(`/clients/${authStore.clientId}`)
+      if (client && !masterStore.clients.find(c => c.id === client.id)) {
+        masterStore.clients.push(client)
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load client:', e)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => ensureClientLoaded())
+
+// authの初期化が遅れた場合にも対応
+watch(() => authStore.clientId, (id) => {
+  if (id && !myClient.value) {
+    loading.value = true
+    ensureClientLoaded()
+  }
 })
 
 const editing = ref(false)
@@ -62,7 +101,11 @@ function cancelEdit() {
       <p>自社の事業者情報を確認・編集できます</p>
     </div>
 
-    <div v-if="!myClient" class="alert alert-warning">
+    <div v-if="loading" class="card">
+      <div class="card-body empty-state"><p>読み込み中...</p></div>
+    </div>
+
+    <div v-else-if="!myClient" class="alert alert-warning">
       所属する事業者情報が見つかりません。管理者にお問い合わせください。
     </div>
 
