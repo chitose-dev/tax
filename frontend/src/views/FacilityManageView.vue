@@ -163,7 +163,7 @@ function getFacilityName(facilityId) {
                 <td><span :class="['badge', f.isActive ? 'badge-success' : 'badge-error']">{{ f.isActive ? '有効' : '無効' }}</span></td>
                 <td v-if="authStore.isAdmin || authStore.clientId" style="text-align:right;white-space:nowrap">
                   <button v-if="authStore.isAdmin || f.clientId === authStore.clientId" class="btn-secondary btn-sm" @click="openFacilityForm(f)" style="margin-right:4px">編集</button>
-                  <button v-if="authStore.isAdmin" class="btn-danger btn-sm" @click="deleteFacility(f)">削除</button>
+                  <button v-if="authStore.isAdmin || f.clientId === authStore.clientId" class="btn-danger btn-sm" @click="deleteFacility(f)">削除</button>
                 </td>
               </tr>
             </tbody>
@@ -201,7 +201,7 @@ function getFacilityName(facilityId) {
                 <td><span :class="['badge', r.isActive ? 'badge-success' : 'badge-error']">{{ r.isActive ? '有効' : '無効' }}</span></td>
                 <td v-if="authStore.isAdmin || authStore.clientId" style="text-align:right;white-space:nowrap">
                   <button class="btn-secondary btn-sm" @click="openRoomForm(r)" style="margin-right:4px">編集</button>
-                  <button v-if="authStore.isAdmin" class="btn-danger btn-sm" @click="deleteRoom(r)">削除</button>
+                  <button v-if="authStore.isAdmin || masterStore.facilities.find(f => f.id === r.facilityId)?.clientId === authStore.clientId" class="btn-danger btn-sm" @click="deleteRoom(r)">削除</button>
                 </td>
               </tr>
             </tbody>
