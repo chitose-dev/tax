@@ -1,10 +1,17 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useMasterStore } from '@/stores/master'
 
 const authStore = useAuthStore()
 const masterStore = useMasterStore()
+
+// 施設フォームで事業者プルダウンを表示するためにクライアントデータを取得
+onMounted(async () => {
+  if (!masterStore.clients.length) {
+    await masterStore.fetchClients()
+  }
+})
 
 const activeTab = ref('facilities')
 
