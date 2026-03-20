@@ -94,12 +94,14 @@ const ClientFormInline = {
   emits: ['save', 'close'],
   setup(props, { emit }) {
     const form = ref({ clientCode: '', clientName: '', representative: '', address: '', phone: '', email: '', notes: '', isActive: true })
+    const validationError = ref('')
     onMounted(() => {
       if (props.client) form.value = { clientCode: props.client.clientCode||'', clientName: props.client.clientName||'', representative: props.client.representative||'', address: props.client.address||'', phone: props.client.phone||'', email: props.client.email||'', notes: props.client.notes||'', isActive: props.client.isActive !== false }
     })
-    return { form, submit() { if (!form.value.clientName?.trim()) { alert('事業者名は必須です'); return } emit('save', { ...form.value }) } }
+    return { form, validationError, submit() { validationError.value = ''; if (!form.value.clientName?.trim()) { validationError.value = '事業者名は必須です（空白のみは不可）'; return } emit('save', { ...form.value }) } }
   },
   template: `<form @submit.prevent="submit">
+    <div v-if="validationError" style="color: var(--danger-color, #e74c3c); margin-bottom: 12px; font-size: 0.9em; padding: 8px 12px; background: #fef2f2; border-radius: 6px">{{ validationError }}</div>
     <div class="form-group"><label>事業者コード</label><input v-model="form.clientCode" maxlength="20" placeholder="後日設定可能" /></div>
     <div class="form-group"><label>事業者名 <span class="required">*</span></label><input v-model="form.clientName" required maxlength="100" /></div>
     <div class="form-group"><label>代表者名</label><input v-model="form.representative" maxlength="50" /></div>

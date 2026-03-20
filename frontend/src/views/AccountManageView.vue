@@ -23,7 +23,7 @@ async function fetchUsers() {
   isLoading.value = true
   try {
     const { api } = await import('@/lib/api')
-    users.value = await api.get('/users')
+    users.value = await api.get('/users', { params: { include_inactive: true } })
   } catch (e) {
     errorMessage.value = 'ユーザー一覧の取得に失敗しました'
   } finally {
@@ -55,7 +55,7 @@ async function submitForm() {
   errorMessage.value = ''
 
   if (!form.value.displayName?.trim()) {
-    errorMessage.value = '表示名は必須です'
+    errorMessage.value = '表示名は必須です（空白のみは不可）'
     return
   }
 
@@ -174,7 +174,7 @@ onMounted(fetchUsers)
           <table>
             <thead><tr><th>名前</th><th>メール</th><th>権限</th><th>所属事業者</th><th>状態</th><th></th></tr></thead>
             <tbody>
-              <tr v-for="u in users" :key="u.id">
+              <tr v-for="u in users" :key="u.id" :style="u.isActive === false ? 'opacity: 0.5; background: var(--color-gray-50, #f9fafb)' : ''">
                 <td>{{ u.displayName || '-' }}</td>
                 <td class="text-sm">{{ u.email }}</td>
                 <td><span :class="['badge', u.role === 'admin' ? 'badge-confirmed' : 'badge-draft']">{{ u.role === 'admin' ? '管理者' : '一般' }}</span></td>

@@ -72,10 +72,12 @@ function startEdit() {
 }
 
 const saving = ref(false)
+const formError = ref('')
 
 async function saveSettings() {
+  formError.value = ''
   if (!form.value.clientName?.trim()) {
-    alert('事業者名は必須です')
+    formError.value = '事業者名は必須です（空白のみは不可）'
     return
   }
   saving.value = true
@@ -83,7 +85,7 @@ async function saveSettings() {
     await masterStore.updateClient(authStore.clientId, { ...form.value })
     editing.value = false
   } catch (e) {
-    alert('保存に失敗しました: ' + (e.data?.detail || e.message || '不明なエラー'))
+    formError.value = '保存に失敗しました: ' + (e.data?.detail || e.message || '不明なエラー')
   } finally {
     saving.value = false
   }
@@ -157,6 +159,7 @@ function cancelEdit() {
         </div>
         <div class="card-body">
           <form @submit.prevent="saveSettings">
+            <div v-if="formError" style="color: var(--danger-color, #e74c3c); margin-bottom: 12px; font-size: 0.9em; padding: 8px 12px; background: #fef2f2; border-radius: 6px">{{ formError }}</div>
             <div class="form-group"><label>事業者コード</label><input v-model="form.clientCode" maxlength="20" /></div>
             <div class="form-group"><label>事業者名 <span class="required">*</span></label><input v-model="form.clientName" required maxlength="100" /></div>
             <div class="form-group"><label>代表者名</label><input v-model="form.representative" maxlength="50" /></div>

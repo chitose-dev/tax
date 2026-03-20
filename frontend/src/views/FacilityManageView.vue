@@ -138,7 +138,7 @@ function getFacilityName(facilityId) {
     <div v-if="activeTab === 'facilities'" class="card">
       <div class="card-header">
         <h2>施設一覧</h2>
-        <button v-if="authStore.isAdmin" class="btn-primary btn-sm" @click="openFacilityForm()">+ 新規登録</button>
+        <button v-if="authStore.isAdmin || authStore.clientId" class="btn-primary btn-sm" @click="openFacilityForm()">+ 新規登録</button>
       </div>
       <div class="card-body" style="padding:0">
         <div class="table-wrapper">
@@ -169,7 +169,7 @@ function getFacilityName(facilityId) {
     <div v-if="activeTab === 'rooms'" class="card">
       <div class="card-header">
         <h2>部屋一覧</h2>
-        <button v-if="authStore.isAdmin" class="btn-primary btn-sm" @click="openRoomForm()">+ 新規登録</button>
+        <button v-if="authStore.isAdmin || authStore.clientId" class="btn-primary btn-sm" @click="openRoomForm()">+ 新規登録</button>
       </div>
       <div class="card-body">
         <div class="form-group" style="max-width:300px;margin-bottom:16px">
@@ -243,6 +243,7 @@ const FacilityFormInline = {
   emits: ['save', 'close'],
   setup(props, { emit }) {
     const form = ref({ clientId: '', facilityCode: '', facilityName: '', roomCodePrefix: '', address: '', phone: '', capacity: null, notes: '', isActive: true })
+    const validationError = ref('')
     onMounted(() => {
       if (props.facility) {
         form.value = { clientId: props.facility.clientId||'', facilityCode: props.facility.facilityCode||'', facilityName: props.facility.facilityName||'', roomCodePrefix: props.facility.roomCodePrefix||'', address: props.facility.address||'', phone: props.facility.phone||'', capacity: props.facility.capacity??null, notes: props.facility.notes||'', isActive: props.facility.isActive !== false }
@@ -250,10 +251,11 @@ const FacilityFormInline = {
         form.value.clientId = props.defaultClientId
       }
     })
-    return { form, submit() {
-      if (!form.value.clientId) { alert('事業者を選択してください'); return }
-      if (!form.value.facilityName?.trim()) { alert('施設名は必須です'); return }
-      if (!form.value.roomCodePrefix || form.value.roomCodePrefix.length !== 1) { alert('プレフィックスは1文字で入力してください'); return }
+    return { form, validationError, submit() {
+      validationError.value = ''
+      if (!form.value.clientId) { validationError.value = '事業者を選択してください'; return }
+      if (!form.value.facilityName?.trim()) { validationError.value = '施設名は必須です（空白のみは不可）'; return }
+      if (!form.value.roomCodePrefix || form.value.roomCodePrefix.length !== 1) { validationError.value = 'プレフィックスは1文字で入力してください'; return }
       form.value.roomCodePrefix = form.value.roomCodePrefix.toUpperCase()
       // null/undefinedのオプショナルフィールドを除去（API 422防止）
       const data = {
@@ -270,6 +272,7 @@ const FacilityFormInline = {
     }}
   },
   template: `<form @submit.prevent="submit">
+    <div v-if="validationError" style="color: var(--danger-color, #e74c3c); margin-bottom: 12px; font-size: 0.9em; padding: 8px 12px; background: #fef2f2; border-radius: 6px">{{ validationError }}</div>
     <div class="form-group"><label>事業者 <span class="required">*</span></label><select v-model="form.clientId" required :disabled="!!facility || lockClient"><option value="">選択してください</option><option v-for="c in clients" :key="c.id" :value="c.id">{{c.clientName}}</option></select></div>
     <div class="form-group"><label>施設コード</label><input v-model="form.facilityCode" maxlength="20" placeholder="後日設定可能" /></div>
     <div class="form-group"><label>施設名 <span class="required">*</span></label><input v-model="form.facilityName" required maxlength="100" /></div>
@@ -288,6 +291,7 @@ const RoomFormInline = {
   emits: ['save', 'close'],
   setup(props, { emit }) {
     const form = ref({ facilityId: '', roomCode: '', roomName: '', capacity: null, notes: '', isActive: true })
+    const validationError = ref('')
     const selectedPrefix = computed(() => {
       const f = props.facilities.find(f => f.id === form.value.facilityId)
       return f?.roomCodePrefix || ''
@@ -295,13 +299,14 @@ const RoomFormInline = {
     onMounted(() => {
       if (props.room) form.value = { facilityId: props.room.facilityId||'', roomCode: props.room.roomCode||'', roomName: props.room.roomName||'', capacity: props.room.capacity??null, notes: props.room.notes||'', isActive: props.room.isActive !== false }
     })
-    return { form, selectedPrefix, submit() {
-      if (!form.value.facilityId) { alert('施設を選択してください'); return }
-      if (!form.value.roomCode?.trim()) { alert('部屋コードは必須です'); return }
-      if (!form.value.roomName?.trim()) { alert('部屋名は必須です'); return }
+    return { form, validationError, selectedPrefix, submit() {
+      validationError.value = ''
+      if (!form.value.facilityId) { validationError.value = '施設を選択してください'; return }
+      if (!form.value.roomCode?.trim()) { validationError.value = '部屋コードは必須です（空白のみは不可）'; return }
+      if (!form.value.roomName?.trim()) { validationError.value = '部屋名は必須です（空白のみは不可）'; return }
       form.value.roomCode = form.value.roomCode.toUpperCase()
       if (selectedPrefix.value && !form.value.roomCode.startsWith(selectedPrefix.value)) {
-        alert(`部屋コードは「${selectedPrefix.value}」で始まる必要があります`)
+        validationError.value = `部屋コードは「${selectedPrefix.value}」で始まる必要があります`
         return
       }
       // ROOM-05: null/undefinedのフィールドを除去（capacityは空なら送信しない）
@@ -313,6 +318,7 @@ const RoomFormInline = {
     }}
   },
   template: `<form @submit.prevent="submit">
+    <div v-if="validationError" style="color: var(--danger-color, #e74c3c); margin-bottom: 12px; font-size: 0.9em; padding: 8px 12px; background: #fef2f2; border-radius: 6px">{{ validationError }}</div>
     <div class="form-group"><label>施設 <span class="required">*</span></label><select v-model="form.facilityId" required :disabled="!!room"><option value="">選択</option><option v-for="f in facilities" :key="f.id" :value="f.id">{{f.facilityName}}（{{f.roomCodePrefix}}）</option></select></div>
     <div class="form-group"><label>部屋コード <span class="required">*</span><span class="hint" v-if="selectedPrefix">（{{selectedPrefix}}で始めてください）</span></label><input v-model="form.roomCode" required maxlength="10" @input="form.roomCode = form.roomCode.toUpperCase()" /></div>
     <div class="form-group"><label>部屋名 <span class="required">*</span></label><input v-model="form.roomName" required maxlength="50" /></div>
