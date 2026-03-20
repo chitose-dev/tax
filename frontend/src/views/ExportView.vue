@@ -39,10 +39,20 @@ const confirmedSummaries = computed(() =>
   )
 )
 
+// 四半期の構成月を算出
+function getQuarterMonths(yearQuarter) {
+  if (!yearQuarter) return []
+  const [y, qStr] = yearQuarter.split('-Q')
+  const q = parseInt(qStr)
+  const start = (q - 1) * 3 + 1
+  return [0, 1, 2].map(i => `${y}-${String(start + i).padStart(2, '0')}`)
+}
+
 // 二重計上警告: 同じ期間で月次exportedと四半期が共存
 function hasDuplicateExportWarning(summary) {
-  if (summary.periodType !== 'quarterly' || !summary.quarterMonths) return false
-  return summary.quarterMonths.some(ym =>
+  if (summary.periodType !== 'quarterly' || !summary.yearQuarter) return false
+  const months = getQuarterMonths(summary.yearQuarter)
+  return months.some(ym =>
     summaryStore.summaries.some(s =>
       s.clientId === summary.clientId && s.facilityId === summary.facilityId &&
       s.periodType === 'monthly' && s.yearMonth === ym && s.status === 'exported'

@@ -12,12 +12,6 @@ const masterStore = useMasterStore()
 
 const TAX_RATE = 200
 
-function getQuarterLabel(yearMonth) {
-  const [y, m] = yearMonth.split('-').map(Number)
-  const q = Math.ceil(m / 3)
-  return `${y}-Q${q}`
-}
-
 function getLastDayOfMonth(yearMonth) {
   const [y, m] = yearMonth.split('-').map(Number)
   const lastDay = new Date(y, m, 0).getDate()

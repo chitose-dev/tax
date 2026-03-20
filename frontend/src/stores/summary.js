@@ -41,10 +41,11 @@ export const useSummaryStore = defineStore('summary', () => {
 
   async function saveSummary(data) {
     if (USE_MOCK) {
-      const existing = summaries.value.find(
-        s => s.clientId === data.clientId && s.facilityId === data.facilityId &&
-             s.yearMonth === data.yearMonth && s.periodType === data.periodType
-      )
+      const existing = summaries.value.find(s => {
+        if (s.clientId !== data.clientId || s.facilityId !== data.facilityId || s.periodType !== data.periodType) return false
+        if (data.periodType === 'quarterly') return s.yearQuarter === data.yearQuarter
+        return s.yearMonth === data.yearMonth
+      })
       if (existing) {
         if (existing.status !== 'draft') throw new Error('確定済みの集計は更新できません')
         Object.assign(existing, data, { updatedAt: new Date() })
