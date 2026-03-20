@@ -274,7 +274,7 @@ const FacilityFormInline = {
       }
       if (form.value.address?.trim()) data.address = form.value.address
       if (form.value.phone?.trim()) data.phone = form.value.phone
-      if (form.value.capacity != null) data.capacity = form.value.capacity
+      if (form.value.capacity != null && form.value.capacity !== '' && !isNaN(form.value.capacity)) data.capacity = Number(form.value.capacity)
       emit('save', data)
     }}
   },
@@ -286,7 +286,7 @@ const FacilityFormInline = {
     <div class="form-group"><label>プレフィックス <span class="required">*</span><span class="hint">（1文字固定）</span></label><input v-model="form.roomCodePrefix" required maxlength="1" minlength="1" class="input-small" @input="form.roomCodePrefix = form.roomCodePrefix.toUpperCase()" /><p class="form-hint">CSVの部屋コード先頭1桁と照合して施設を自動識別します（例: A→施設A, K→施設K）</p></div>
     <div class="form-group"><label>所在地</label><input v-model="form.address" maxlength="200" /></div>
     <div class="form-group"><label>電話</label><input v-model="form.phone" type="tel" maxlength="15" /></div>
-    <div class="form-group"><label>収容人数</label><input v-model.number="form.capacity" type="number" min="0" class="input-small" /></div>
+    <div class="form-group"><label>収容人数</label><input :value="form.capacity" @input="form.capacity = $event.target.value === '' ? null : Number($event.target.value)" type="number" min="0" class="input-small" /></div>
     <div class="form-group"><label>備考</label><textarea v-model="form.notes" rows="2" maxlength="500"></textarea></div>
     <div class="form-group"><label class="checkbox"><input type="checkbox" v-model="form.isActive" />有効</label></div>
     <div class="modal-actions"><button type="button" class="btn-secondary" @click="$emit('close')">キャンセル</button><button type="submit" class="btn-primary">保存</button></div>
@@ -318,7 +318,7 @@ const RoomFormInline = {
       }
       // ROOM-05: null/undefinedのフィールドを除去（capacityは空なら送信しない）
       const data = { facilityId: form.value.facilityId, roomCode: form.value.roomCode, roomName: form.value.roomName }
-      if (form.value.capacity != null && form.value.capacity !== '') data.capacity = parseInt(form.value.capacity)
+      if (form.value.capacity != null && form.value.capacity !== '' && !isNaN(form.value.capacity)) data.capacity = Number(form.value.capacity)
       if (form.value.notes?.trim()) data.notes = form.value.notes
       data.isActive = form.value.isActive
       emit('save', data)
@@ -329,7 +329,7 @@ const RoomFormInline = {
     <div class="form-group"><label>施設 <span class="required">*</span></label><select v-model="form.facilityId" required :disabled="!!room"><option value="">選択</option><option v-for="f in facilities" :key="f.id" :value="f.id">{{f.facilityName}}（{{f.roomCodePrefix}}）</option></select></div>
     <div class="form-group"><label>部屋コード <span class="required">*</span><span class="hint" v-if="selectedPrefix">（{{selectedPrefix}}で始めてください）</span></label><input v-model="form.roomCode" required maxlength="10" @input="form.roomCode = form.roomCode.toUpperCase()" /></div>
     <div class="form-group"><label>部屋名 <span class="required">*</span></label><input v-model="form.roomName" required maxlength="50" /></div>
-    <div class="form-group"><label>定員</label><input v-model.number="form.capacity" type="number" min="0" class="input-small" /></div>
+    <div class="form-group"><label>定員</label><input :value="form.capacity" @input="form.capacity = $event.target.value === '' ? null : Number($event.target.value)" type="number" min="0" class="input-small" /></div>
     <div class="form-group"><label>備考</label><textarea v-model="form.notes" rows="2" maxlength="500"></textarea></div>
     <div class="form-group"><label class="checkbox"><input type="checkbox" v-model="form.isActive" />有効</label></div>
     <div class="modal-actions"><button type="button" class="btn-secondary" @click="$emit('close')">キャンセル</button><button type="submit" class="btn-primary">保存</button></div>
