@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useImportStore } from '@/stores/import'
 import { useSummaryStore } from '@/stores/summary'
 import { useMasterStore } from '@/stores/master'
+import { normalizeDateString } from '@/utils/csv-parser'
 
 const authStore = useAuthStore()
 const importStore = useImportStore()
@@ -128,7 +129,7 @@ const calculatedSummaries = computed(() => {
     function getNights(r) {
       if (r.nights) return r.nights
       if (r.checkInDate && r.checkOutDate) {
-        const diff = new Date(r.checkOutDate) - new Date(r.checkInDate)
+        const diff = new Date(normalizeDateString(r.checkOutDate)) - new Date(normalizeDateString(r.checkInDate))
         return Math.max(0, Math.round(diff / 86400000))
       }
       return 1
