@@ -64,31 +64,11 @@ export async function parseFile(file) {
   throw new Error(`サポートされていないファイル形式: .${ext}`)
 }
 
-/**
- * 日本語日付（YYYY年M月D日）やスラッシュ区切り（YYYY/MM/DD）をISO形式に正規化する。
- * ISO形式やパース不能な文字列はそのまま返す。
- */
-export function normalizeDateString(value) {
-  if (!value || typeof value !== 'string') return value
-  const s = value.trim()
-  // YYYY年M月D日
-  const jp = s.match(/^(\d{4})年(\d{1,2})月(\d{1,2})日$/)
-  if (jp) {
-    return `${jp[1]}-${jp[2].padStart(2, '0')}-${jp[3].padStart(2, '0')}`
-  }
-  // YYYY/MM/DD
-  const slash = s.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/)
-  if (slash) {
-    return `${slash[1]}-${slash[2].padStart(2, '0')}-${slash[3].padStart(2, '0')}`
-  }
-  return s
-}
-
 export function applyColumnMapping(rows, mapping) {
   return rows.map((row, index) => {
     const record = { rowNumber: index + 2 }
-    if (mapping.checkInDate != null) record.checkInDate = normalizeDateString(row[mapping.checkInDate] || '')
-    if (mapping.checkOutDate != null) record.checkOutDate = normalizeDateString(row[mapping.checkOutDate] || '')
+    if (mapping.checkInDate != null) record.checkInDate = row[mapping.checkInDate] || ''
+    if (mapping.checkOutDate != null) record.checkOutDate = row[mapping.checkOutDate] || ''
     if (mapping.nights != null) {
       const rawNights = row[mapping.nights]
       const parsed = parseFloat(rawNights)

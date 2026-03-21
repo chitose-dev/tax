@@ -1,5 +1,3 @@
-import { normalizeDateString } from './csv-parser'
-
 export function resolveFacilityByRoomCode(roomCode, facilities) {
   if (!roomCode || roomCode.length < 1) {
     return { success: false, error: `部屋コードが無効です: "${roomCode}"` }
@@ -26,13 +24,13 @@ export function previewFacilityResolution(records, facilities) {
 
     // CSV-17: 日付バリデーション
     if (record.checkInDate) {
-      const ci = new Date(normalizeDateString(record.checkInDate))
+      const ci = new Date(record.checkInDate)
       if (isNaN(ci.getTime())) {
         rowErrors.push({ row: rowNum, column: 'checkInDate', message: `開始日が不正です: "${record.checkInDate}"`, value: record.checkInDate, severity: 'error' })
       }
     }
     if (record.checkOutDate) {
-      const co = new Date(normalizeDateString(record.checkOutDate))
+      const co = new Date(record.checkOutDate)
       if (isNaN(co.getTime())) {
         rowErrors.push({ row: rowNum, column: 'checkOutDate', message: `終了日が不正です: "${record.checkOutDate}"`, value: record.checkOutDate, severity: 'error' })
       }
@@ -40,8 +38,8 @@ export function previewFacilityResolution(records, facilities) {
 
     // EDGE-08/CSV-19: 日付逆転チェック (CO <= CI)
     if (record.checkInDate && record.checkOutDate) {
-      const ci = new Date(normalizeDateString(record.checkInDate))
-      const co = new Date(normalizeDateString(record.checkOutDate))
+      const ci = new Date(record.checkInDate)
+      const co = new Date(record.checkOutDate)
       if (!isNaN(ci.getTime()) && !isNaN(co.getTime()) && co <= ci) {
         rowErrors.push({ row: rowNum, column: 'checkOutDate', message: 'チェックアウト日はチェックイン日より後の日付にしてください', value: record.checkOutDate, severity: 'error' })
       }
