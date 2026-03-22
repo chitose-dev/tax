@@ -79,18 +79,26 @@ const availableMonths = computed(() => {
   return [...months].sort().reverse()
 })
 
-// 利用可能な四半期一覧
+// 利用可能な四半期一覧（宿泊税特例: Q1=12,1,2月 / Q2=3,4,5月 / Q3=6,7,8月 / Q4=9,10,11月）
+function monthToQuarter(y, m) {
+  // 12月 → 翌年Q1, 1-2月 → Q1, 3-5月 → Q2, 6-8月 → Q3, 9-11月 → Q4
+  if (m === 12) return `${y + 1}-Q1`
+  if (m <= 2) return `${y}-Q1`
+  if (m <= 5) return `${y}-Q2`
+  if (m <= 8) return `${y}-Q3`
+  return `${y}-Q4`
+}
+const quarterLabels = { Q1: '12月-2月', Q2: '3月-5月', Q3: '6月-8月', Q4: '9月-11月' }
 const availableQuarters = computed(() => {
   const quarters = new Set()
   availableMonths.value.forEach(ym => {
     const [y, m] = ym.split('-').map(Number)
-    const q = Math.ceil(m / 3)
-    quarters.add(`${y}-Q${q}`)
+    quarters.add(monthToQuarter(y, m))
   })
-  return [...quarters].sort().reverse().map(q => ({
-    value: q,
-    label: q.replace('-Q1', '年 1-3月').replace('-Q2', '年 4-6月').replace('-Q3', '年 7-9月').replace('-Q4', '年 10-12月')
-  }))
+  return [...quarters].sort().reverse().map(q => {
+    const qKey = q.split('-')[1]
+    return { value: q, label: q.split('-')[0] + '年 ' + quarterLabels[qKey] }
+  })
 })
 
 // 四半期の構成月を取得
@@ -271,7 +279,7 @@ async function saveAndConfirm(item) {
     <!-- 集計結果 -->
     <div v-if="(selectedYearMonth || selectedQuarter) && calculatedSummaries.length > 0" class="card">
       <div class="card-header">
-        <h2>集計結果 - {{ periodType === 'quarterly' ? selectedQuarter.replace('-Q1', '年 Q1(1-3月)').replace('-Q2', '年 Q2(4-6月)').replace('-Q3', '年 Q3(7-9月)').replace('-Q4', '年 Q4(10-12月)') : selectedYearMonth }}</h2>
+        <h2>集計結果 - {{ periodType === 'quarterly' ? selectedQuarter.replace('-Q1', '年 Q1(12月-2月)').replace('-Q2', '年 Q2(3月-5月)').replace('-Q3', '年 Q3(6月-8月)').replace('-Q4', '年 Q4(9月-11月)') : selectedYearMonth }}</h2>
       </div>
       <div class="card-body" style="padding:0">
         <div class="table-wrapper">
