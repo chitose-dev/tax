@@ -83,12 +83,18 @@ function getYearMonthForEltax(summary) {
   return ''
 }
 
+// CSVフィールド用: ダブルクォーテーションをエスケープし改行を除去
+function csvSafe(val) {
+  const s = String(val ?? '')
+  return s.replace(/\r?\n/g, ' ').replace(/"/g, '""')
+}
+
 function generateEltaxCSV(summary, client, facility) {
   const today = new Date()
   const todayStr = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`
 
-  const taxableNights = summary.taxablePersonNights || 0
-  const taxAmount = summary.taxAmount || 0
+  const taxableNights = Number(summary.taxablePersonNights) || 0
+  const taxAmount = Number(summary.taxAmount) || 0
   const yearMonth = getYearMonthForEltax(summary)
   const postalCode = (client?.postalCode || '').replace(/-/g, '')
 
@@ -142,8 +148,8 @@ function generateEltaxCSV(summary, client, facility) {
     ''                                           // 75: 備考
   )
 
-  // 全セルをダブルクォーテーションで囲む
-  return cols.map(c => `"${c}"`).join(',')
+  // 全セルをダブルクォーテーションで囲む（値内の"は""にエスケープ済み）
+  return cols.map(c => `"${csvSafe(c)}"`).join(',')
 }
 
 async function downloadCSV(summary) {
