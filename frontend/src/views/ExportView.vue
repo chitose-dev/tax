@@ -72,24 +72,94 @@ function getClientCode(clientId) {
   return masterStore.clients.find(c => c.id === clientId)?.clientCode || ''
 }
 
-async function downloadCSV(summary) {
-  // eLTAX形式のCSV生成（簡易版）
-  const clientCode = getClientCode(summary.clientId)
-  const facilityCode = getFacilityCode(summary.facilityId)
-  const facilityName = getFacilityName(summary.facilityId)
+function getYearMonthForEltax(summary) {
+  if (summary.yearMonth) return summary.yearMonth.replace('-', '')
+  if (summary.yearQuarter) {
+    const [y, qStr] = summary.yearQuarter.split('-Q')
+    const q = parseInt(qStr)
+    const lastMonth = q * 3
+    return `${y}${String(lastMonth).padStart(2, '0')}`
+  }
+  return ''
+}
 
-  const rows = [
-    ['特別徴収義務者番号', '宿泊施設番号', '宿泊施設名称', '課税期間開始', '課税期間終了', '課税人泊数', '税率', '税額'],
-    [clientCode, facilityCode, facilityName, getPeriodStart(summary), getPeriodEnd(summary), summary.taxablePersonNights, 200, summary.taxAmount]
+function generateEltaxCSV(summary, client, facility) {
+  const today = new Date()
+  const todayStr = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`
+
+  const taxableNights = summary.taxablePersonNights || 0
+  const taxAmount = summary.taxAmount || 0
+  const yearMonth = getYearMonthForEltax(summary)
+  const postalCode = (client?.postalCode || '').replace(/-/g, '')
+
+  const cols = [
+    '',                                          // 1: 税目区分
+    '',                                          // 2: 様式ID
+    '',                                          // 3: 手続ID
+    '',                                          // 4: 利用者ID
+    '',                                          // 5: 納税者ID
+    '',                                          // 6: 代理人利用者ID
+    '',                                          // 7: 代理人納税者ID
+    '',                                          // 8: 申告受付番号
+    '',                                          // 9: 受付年月日
+    '43100',                                     // 10: 宛先【地方公共団体コード】
+    '001',                                       // 11: 宛先【税務事務所コード】
+    '熊本市長',                                  // 12: 宛先【長名】
+    todayStr,                                    // 13: 提出年月日
+    facility?.facilityCode || client?.clientCode || '', // 14: 証票番号
+    client?.clientName || '',                    // 15: 氏名又は名称
+    '',                                          // 16: 代表者氏名
+    postalCode,                                  // 17: 郵便番号
+    client?.address || '',                       // 18: 住所又は所在地
+    client?.phone || '',                         // 19: 電話番号
+    '',                                          // 20: 担当者氏名
+    '',                                          // 21: 担当者連絡先
+    '1',                                         // 22: 個人番号・法人番号区分（法人）
+    '',                                          // 23: 個人番号
+    client?.corporateNumber || '',               // 24: 法人番号
+    facility?.facilityCode || '',                // 25: 施設番号
+    facility?.facilityName || '',                // 26: 施設名称
+    facility?.address || '',                     // 27: 施設所在地
+    facility?.phone || '',                       // 28: 施設電話番号
+    yearMonth,                                   // 29: 納入税額－行為年月
+    '宿泊税（定額）',                            // 30: 申告区分１
+    '200',                                       // 31: 申告区分１【税率】
+    String(taxableNights),                       // 32: 申告区分１【宿泊数】
+    String(taxAmount),                           // 33: 申告区分１【税額】
   ]
-  const csv = rows.map(r => r.join(',')).join('\n')
-  const bom = '\uFEFF'
-  const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8' })
+
+  // 34〜69: 申告区分２〜１０（各4列×9区分＝36列）→ 全て空欄
+  for (let i = 0; i < 36; i++) {
+    cols.push('')
+  }
+
+  cols.push(
+    String(taxableNights),                       // 70: 課税対象宿泊合計【宿泊数】
+    String(taxAmount),                           // 71: 課税対象宿泊合計【税額】
+    '0',                                         // 72: 課税免除【宿泊数】
+    String(taxableNights),                       // 73: 合計【宿泊数】
+    String(taxAmount),                           // 74: 合計【税額】
+    ''                                           // 75: 備考
+  )
+
+  // 全セルをダブルクォーテーションで囲む
+  return cols.map(c => `"${c}"`).join(',')
+}
+
+async function downloadCSV(summary) {
+  const client = masterStore.getClientById(summary.clientId)
+  const facility = masterStore.facilities.find(f => f.id === summary.facilityId)
+
+  const csv = generateEltaxCSV(summary, client, facility)
+
+  // UTF-8 BOM無しで出力
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  const periodLabel = summary.yearQuarter || summary.yearMonth || 'export'
-  a.download = `eLTAX_${periodLabel}_${facilityCode || 'export'}.csv`
+  const yearMonth = getYearMonthForEltax(summary)
+  const facilityName = facility?.facilityName || 'export'
+  a.download = `eLTAX_納入申告_${yearMonth}_${facilityName}.csv`
   a.click()
   URL.revokeObjectURL(url)
 
