@@ -77,6 +77,21 @@ function startEdit() {
 
 const saving = ref(false)
 const formError = ref('')
+const postalLoading = ref(false)
+async function lookupAddress() {
+  const code = (form.value.postalCode || '').replace(/-/g, '')
+  if (code.length !== 7) return
+  postalLoading.value = true
+  try {
+    const res = await fetch(`https://zipcloud.ibsnet.co.jp/api/search?zipcode=${code}`)
+    const data = await res.json()
+    if (data.results && data.results.length > 0) {
+      const r = data.results[0]
+      form.value.address = r.address1 + r.address2 + r.address3
+    }
+  } catch (e) { /* ignore */ }
+  postalLoading.value = false
+}
 
 async function saveSettings() {
   formError.value = ''
@@ -179,7 +194,7 @@ function cancelEdit() {
             <div class="form-group"><label>事業者コード</label><input v-model="form.clientCode" maxlength="20" /></div>
             <div class="form-group"><label>事業者名 <span class="required">*</span></label><input v-model="form.clientName" required maxlength="100" /></div>
             <div class="form-group"><label>代表者名</label><input v-model="form.representative" maxlength="50" /></div>
-            <div class="form-group"><label>郵便番号</label><input v-model="form.postalCode" maxlength="7" placeholder="1234567（ハイフンなし7桁）" /></div>
+            <div class="form-group"><label>郵便番号</label><div style="display:flex;gap:8px;align-items:center"><input v-model="form.postalCode" maxlength="7" placeholder="1234567" style="flex:1" @input="if(form.postalCode.replace(/-/g,'').length===7) lookupAddress()" /><button type="button" class="btn-secondary btn-sm" @click="lookupAddress" :disabled="postalLoading">{{ postalLoading ? '検索中...' : '住所検索' }}</button></div></div>
             <div class="form-group"><label>住所</label><input v-model="form.address" maxlength="200" /></div>
             <div class="form-group"><label>電話番号</label><input v-model="form.phone" type="tel" maxlength="20" /></div>
             <div class="form-group"><label>メール</label><input v-model="form.email" type="email" maxlength="254" /></div>
