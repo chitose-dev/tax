@@ -52,7 +52,8 @@ watch(() => authStore.clientId, (id) => {
 const editing = ref(false)
 const form = ref({
   clientCode: '', clientName: '', representative: '',
-  address: '', phone: '', email: '', notes: ''
+  postalCode: '', address: '', phone: '', email: '',
+  corporateType: 1, corporateNumber: '', notes: ''
 })
 
 function startEdit() {
@@ -62,9 +63,12 @@ function startEdit() {
       clientCode: c.clientCode || '',
       clientName: c.clientName || '',
       representative: c.representative || '',
+      postalCode: c.postalCode || '',
       address: c.address || '',
       phone: c.phone || '',
       email: c.email || '',
+      corporateType: c.corporateType ?? 1,
+      corporateNumber: c.corporateNumber || '',
       notes: c.notes || ''
     }
   }
@@ -133,6 +137,10 @@ function cancelEdit() {
               <div class="detail-value">{{ myClient.representative || '未設定' }}</div>
             </div>
             <div class="detail-item">
+              <div class="detail-label">郵便番号</div>
+              <div class="detail-value">{{ myClient.postalCode || '未設定' }}</div>
+            </div>
+            <div class="detail-item">
               <div class="detail-label">住所</div>
               <div class="detail-value">{{ myClient.address || '未設定' }}</div>
             </div>
@@ -143,6 +151,14 @@ function cancelEdit() {
             <div class="detail-item">
               <div class="detail-label">メール</div>
               <div class="detail-value">{{ myClient.email || '未設定' }}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">個人/法人区分</div>
+              <div class="detail-value">{{ myClient.corporateType === 2 ? '個人' : '法人' }}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">法人番号</div>
+              <div class="detail-value">{{ myClient.corporateNumber || '未設定' }}</div>
             </div>
             <div v-if="myClient.notes" class="detail-item detail-full">
               <div class="detail-label">備考</div>
@@ -163,9 +179,12 @@ function cancelEdit() {
             <div class="form-group"><label>事業者コード</label><input v-model="form.clientCode" maxlength="20" /></div>
             <div class="form-group"><label>事業者名 <span class="required">*</span></label><input v-model="form.clientName" required maxlength="100" /></div>
             <div class="form-group"><label>代表者名</label><input v-model="form.representative" maxlength="50" /></div>
+            <div class="form-group"><label>郵便番号</label><input v-model="form.postalCode" maxlength="8" placeholder="1234567（ハイフンなし7桁）" /></div>
             <div class="form-group"><label>住所</label><input v-model="form.address" maxlength="200" /></div>
-            <div class="form-group"><label>電話番号</label><input v-model="form.phone" type="tel" maxlength="15" /></div>
+            <div class="form-group"><label>電話番号</label><input v-model="form.phone" type="tel" maxlength="20" /></div>
             <div class="form-group"><label>メール</label><input v-model="form.email" type="email" maxlength="254" /></div>
+            <div class="form-group"><label>個人/法人区分</label><select v-model="form.corporateType"><option :value="1">法人</option><option :value="2">個人</option></select></div>
+            <div class="form-group"><label>法人番号</label><input v-model="form.corporateNumber" maxlength="13" placeholder="13桁（法人の場合）" /></div>
             <div class="form-group"><label>備考</label><textarea v-model="form.notes" rows="2" maxlength="500"></textarea></div>
             <div class="flex gap-2" style="margin-top: 20px;">
               <button type="submit" class="btn-primary" :disabled="saving">{{ saving ? '保存中...' : '保存' }}</button>
