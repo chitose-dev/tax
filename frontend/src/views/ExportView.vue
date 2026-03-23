@@ -120,9 +120,9 @@ function generateEltaxCSV(summary, client, facility) {
     client?.phone || '',                         // 19: 電話番号
     '',                                          // 20: 担当者氏名
     '',                                          // 21: 担当者連絡先
-    '1',                                         // 22: 個人番号・法人番号区分（法人）
-    '',                                          // 23: 個人番号
-    client?.corporateNumber || '',               // 24: 法人番号
+    String(client?.corporateType ?? 1),           // 22: 個人番号・法人番号区分（1=法人, 2=個人）
+    (client?.corporateType === 2 ? (client?.personalNumber || '') : ''), // 23: 個人番号（個人の場合12桁）
+    (client?.corporateType !== 2 ? (client?.corporateNumber || '') : ''), // 24: 法人番号（法人の場合13桁）
     facility?.facilityCode || '',                // 25: 施設番号
     facility?.facilityName || '',                // 26: 施設名称
     facility?.address || '',                     // 27: 施設所在地

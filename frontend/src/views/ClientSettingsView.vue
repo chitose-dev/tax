@@ -53,7 +53,7 @@ const editing = ref(false)
 const form = ref({
   clientCode: '', clientName: '', representative: '',
   postalCode: '', address: '', phone: '', email: '',
-  corporateType: 1, corporateNumber: '', notes: ''
+  corporateType: 1, corporateNumber: '', personalNumber: '', notes: ''
 })
 
 function startEdit() {
@@ -69,6 +69,7 @@ function startEdit() {
       email: c.email || '',
       corporateType: c.corporateType ?? 1,
       corporateNumber: c.corporateNumber || '',
+      personalNumber: c.personalNumber || '',
       notes: c.notes || ''
     }
   }
@@ -175,9 +176,13 @@ function cancelEdit() {
               <div class="detail-label">個人/法人区分</div>
               <div class="detail-value">{{ myClient.corporateType === 2 ? '個人' : '法人' }}</div>
             </div>
-            <div class="detail-item">
+            <div v-if="myClient.corporateType !== 2" class="detail-item">
               <div class="detail-label">法人番号</div>
               <div class="detail-value">{{ myClient.corporateNumber || '未設定' }}</div>
+            </div>
+            <div v-if="myClient.corporateType === 2" class="detail-item">
+              <div class="detail-label">個人番号</div>
+              <div class="detail-value">{{ myClient.personalNumber || '未設定' }}</div>
             </div>
             <div v-if="myClient.notes" class="detail-item detail-full">
               <div class="detail-label">備考</div>
@@ -203,7 +208,8 @@ function cancelEdit() {
             <div class="form-group"><label>電話番号</label><input v-model="form.phone" type="tel" maxlength="20" /></div>
             <div class="form-group"><label>メール</label><input v-model="form.email" type="email" maxlength="254" /></div>
             <div class="form-group"><label>個人/法人区分</label><select v-model="form.corporateType"><option :value="1">法人</option><option :value="2">個人</option></select></div>
-            <div class="form-group"><label>法人番号</label><input v-model="form.corporateNumber" maxlength="13" placeholder="13桁（法人の場合）" /></div>
+            <div v-if="form.corporateType !== 2" class="form-group"><label>法人番号</label><input v-model="form.corporateNumber" maxlength="13" placeholder="13桁（法人の場合）" /></div>
+            <div v-if="form.corporateType === 2" class="form-group"><label>個人番号</label><input v-model="form.personalNumber" maxlength="12" placeholder="12桁（個人の場合）" /></div>
             <div class="form-group"><label>備考</label><textarea v-model="form.notes" rows="2" maxlength="500"></textarea></div>
             <div class="flex gap-2" style="margin-top: 20px;">
               <button type="submit" class="btn-primary" :disabled="saving">{{ saving ? '保存中...' : '保存' }}</button>
