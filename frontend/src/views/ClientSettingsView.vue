@@ -179,7 +179,7 @@ function cancelEdit() {
             <div class="form-group"><label>事業者コード</label><input v-model="form.clientCode" maxlength="20" /></div>
             <div class="form-group"><label>事業者名 <span class="required">*</span></label><input v-model="form.clientName" required maxlength="100" /></div>
             <div class="form-group"><label>代表者名</label><input v-model="form.representative" maxlength="50" /></div>
-            <div class="form-group"><label>郵便番号</label><input v-model="form.postalCode" maxlength="8" placeholder="1234567（ハイフンなし7桁）" /></div>
+            <div class="form-group"><label>郵便番号</label><input v-model="form.postalCode" maxlength="7" placeholder="1234567（ハイフンなし7桁）" /></div>
             <div class="form-group"><label>住所</label><input v-model="form.address" maxlength="200" /></div>
             <div class="form-group"><label>電話番号</label><input v-model="form.phone" type="tel" maxlength="20" /></div>
             <div class="form-group"><label>メール</label><input v-model="form.email" type="email" maxlength="254" /></div>
