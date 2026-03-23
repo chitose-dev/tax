@@ -76,7 +76,7 @@ async function deleteClient(client) {
     </div>
 
     <!-- Client Form Modal -->
-    <div v-if="showClientForm" class="modal-overlay" @click.self="showClientForm = false">
+    <div v-if="showClientForm" class="modal-overlay">
       <div class="modal">
         <h3>{{ editingClient ? '事業者編集' : '新規事業者登録' }}</h3>
         <div v-if="formError" style="color: var(--danger-color, #e74c3c); margin-bottom: 12px; font-size: 0.9em; padding: 8px 12px; background: #fef2f2; border-radius: 6px">{{ formError }}</div>

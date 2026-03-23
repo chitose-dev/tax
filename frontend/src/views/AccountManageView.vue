@@ -202,7 +202,7 @@ onMounted(fetchUsers)
     </div>
 
     <!-- User Form Modal (新規 / 編集 共通) -->
-    <div v-if="showForm" class="modal-overlay" @click.self="showForm = false">
+    <div v-if="showForm" class="modal-overlay">
       <div class="modal">
         <h3>{{ editingUser ? 'ユーザー編集' : 'ユーザー追加' }}</h3>
         <div v-if="errorMessage" style="color: var(--danger-color, #e74c3c); margin-bottom: 12px; font-size: 0.9em; padding: 8px 12px; background: #fef2f2; border-radius: 6px">{{ errorMessage }}</div>

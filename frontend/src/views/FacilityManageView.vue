@@ -211,7 +211,7 @@ function getFacilityName(facilityId) {
     </div>
 
     <!-- Facility Form Modal -->
-    <div v-if="showFacilityForm" class="modal-overlay" @click.self="showFacilityForm = false">
+    <div v-if="showFacilityForm" class="modal-overlay">
       <div class="modal">
         <h3>{{ editingFacility ? '施設編集' : '新規施設登録' }}</h3>
         <div v-if="formError" style="color: var(--danger-color, #e74c3c); margin-bottom: 12px; font-size: 0.9em; padding: 8px 12px; background: #fef2f2; border-radius: 6px">{{ formError }}</div>
@@ -227,7 +227,7 @@ function getFacilityName(facilityId) {
     </div>
 
     <!-- Room Form Modal -->
-    <div v-if="showRoomForm" class="modal-overlay" @click.self="showRoomForm = false">
+    <div v-if="showRoomForm" class="modal-overlay">
       <div class="modal">
         <h3>{{ editingRoom ? '部屋編集' : '新規部屋登録' }}</h3>
         <div v-if="formError" style="color: var(--danger-color, #e74c3c); margin-bottom: 12px; font-size: 0.9em; padding: 8px 12px; background: #fef2f2; border-radius: 6px">{{ formError }}</div>
