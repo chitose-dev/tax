@@ -96,6 +96,10 @@ const ClientFormInline = {
     const form = ref({ clientCode: '', clientName: '', representative: '', address: '', postalCode: '', phone: '', email: '', corporateType: 1, corporateNumber: '', notes: '', isActive: true })
     const validationError = ref('')
     const postalLoading = ref(false)
+    function onPostalInput() {
+      const code = (form.value.postalCode || '').replace(/-/g, '')
+      if (code.length === 7) lookupAddress()
+    }
     async function lookupAddress() {
       const code = (form.value.postalCode || '').replace(/-/g, '')
       if (code.length !== 7) return
@@ -113,14 +117,14 @@ const ClientFormInline = {
     onMounted(() => {
       if (props.client) form.value = { clientCode: props.client.clientCode||'', clientName: props.client.clientName||'', representative: props.client.representative||'', address: props.client.address||'', postalCode: props.client.postalCode||'', phone: props.client.phone||'', email: props.client.email||'', corporateType: props.client.corporateType ?? 1, corporateNumber: props.client.corporateNumber||'', notes: props.client.notes||'', isActive: props.client.isActive !== false }
     })
-    return { form, validationError, postalLoading, lookupAddress, submit() { validationError.value = ''; if (!form.value.clientName?.trim()) { validationError.value = '事業者名は必須です（空白のみは不可）'; return } emit('save', { ...form.value }) } }
+    return { form, validationError, postalLoading, lookupAddress, onPostalInput, submit() { validationError.value = ''; if (!form.value.clientName?.trim()) { validationError.value = '事業者名は必須です（空白のみは不可）'; return } emit('save', { ...form.value }) } }
   },
   template: `<form @submit.prevent="submit">
     <div v-if="validationError" style="color: var(--danger-color, #e74c3c); margin-bottom: 12px; font-size: 0.9em; padding: 8px 12px; background: #fef2f2; border-radius: 6px">{{ validationError }}</div>
     <div class="form-group"><label>事業者コード</label><input v-model="form.clientCode" maxlength="20" placeholder="後日設定可能" /></div>
     <div class="form-group"><label>事業者名 <span class="required">*</span></label><input v-model="form.clientName" required maxlength="100" /></div>
     <div class="form-group"><label>代表者名</label><input v-model="form.representative" maxlength="50" /></div>
-    <div class="form-group"><label>郵便番号</label><div style="display:flex;gap:8px;align-items:center"><input v-model="form.postalCode" maxlength="7" placeholder="1234567" style="flex:1" @input="if(form.postalCode.replace(/-/g,'').length===7) lookupAddress()" /><button type="button" class="btn-secondary btn-sm" @click="lookupAddress" :disabled="postalLoading">{{ postalLoading ? '検索中...' : '住所検索' }}</button></div></div>
+    <div class="form-group"><label>郵便番号</label><div style="display:flex;gap:8px;align-items:center"><input v-model="form.postalCode" maxlength="7" placeholder="1234567" style="flex:1" @input="onPostalInput" /><button type="button" class="btn-secondary btn-sm" @click="lookupAddress" :disabled="postalLoading">{{ postalLoading ? '検索中...' : '住所検索' }}</button></div></div>
     <div class="form-group"><label>住所</label><input v-model="form.address" maxlength="200" /></div>
     <div class="form-group"><label>電話番号</label><input v-model="form.phone" type="tel" maxlength="20" /></div>
     <div class="form-group"><label>メール</label><input v-model="form.email" type="email" maxlength="254" /></div>
