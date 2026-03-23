@@ -12,8 +12,12 @@ const masterStore = useMasterStore()
 
 const clientId = computed(() => authStore.isAdmin ? null : authStore.clientId)
 
-onMounted(() => {
-  importStore.fetchImportLogs(clientId.value)
+onMounted(async () => {
+  await Promise.all([
+    importStore.fetchImportLogs(clientId.value),
+    importStore.fetchLodgingRecords(clientId.value),
+    summaryStore.loadSummaries(clientId.value),
+  ])
 })
 
 // 一般ユーザー用の統計
