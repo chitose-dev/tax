@@ -148,7 +148,6 @@ export async function generateMonthlyReportPDF({ facilityName, months }) {
       fontSize: 8,
       cellPadding: 1.5,
       halign: 'center',
-      font: 'NotoSansJP',
       lineColor: [0, 0, 0],
       lineWidth: 0.2,
     },
@@ -156,7 +155,9 @@ export async function generateMonthlyReportPDF({ facilityName, months }) {
       fillColor: [220, 220, 220],
       textColor: [0, 0, 0],
       fontStyle: 'bold',
-      font: 'NotoSansJP',
+    },
+    willDrawCell() {
+      doc.setFont('NotoSansJP', 'normal')
     },
     columnStyles: {
       0: { cellWidth: colWidth, halign: 'center' },
