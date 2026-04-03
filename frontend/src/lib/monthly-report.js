@@ -3,7 +3,7 @@
  * A4縦1枚に横3列で最大3ヶ月分の課税対象宿泊数を表示
  */
 import { jsPDF } from 'jspdf'
-import 'jspdf-autotable'
+import autoTable from 'jspdf-autotable'
 // フォントはdynamic importでPDF生成時のみ読み込む（バンドルサイズ削減）
 
 /**
@@ -138,7 +138,7 @@ export async function generateMonthlyReportPDF({ facilityName, months }) {
   // テーブル描画
   const colWidth = contentWidth / 6
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: marginTop + 14,
     margin: { left: marginLeft, right: marginRight },
     head: [subHead],
