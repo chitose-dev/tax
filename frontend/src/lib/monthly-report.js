@@ -139,7 +139,7 @@ export async function generateMonthlyReportPDF({ facilityName, months }) {
   const colWidth = contentWidth / 6
 
   autoTable(doc, {
-    startY: marginTop + 14,
+    startY: marginTop + 22,
     margin: { left: marginLeft, right: marginRight },
     head: [subHead],
     body,
