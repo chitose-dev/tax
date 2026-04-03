@@ -28,21 +28,20 @@ function expandRecordsToDailyTotals(records, year, month) {
   for (let d = 1; d <= daysInMonth; d++) dayTotals[d] = 0
 
   for (const rec of records) {
-    const ci = new Date(rec.checkInDate)
     const co = new Date(rec.checkOutDate)
+    const nights = Number(rec.nights) || 1
     const taxablePersons = (Number(rec.adults) || 0) + (Number(rec.children) || 0)
 
-    const current = new Date(ci)
-    while (current < co) {
-      const cy = current.getFullYear()
-      const cm = current.getMonth() + 1
-      const cd = current.getDate()
+    // CO月一括計上: CO前日（最終泊）に全泊数をまとめて計上
+    const lastNight = new Date(co)
+    lastNight.setDate(lastNight.getDate() - 1)
 
-      if (cy === year && cm === month && dayTotals[cd] !== undefined) {
-        dayTotals[cd] += taxablePersons
-      }
+    const cy = lastNight.getFullYear()
+    const cm = lastNight.getMonth() + 1
+    const cd = lastNight.getDate()
 
-      current.setDate(current.getDate() + 1)
+    if (cy === year && cm === month && dayTotals[cd] !== undefined) {
+      dayTotals[cd] += taxablePersons * nights
     }
   }
 
