@@ -4,7 +4,7 @@
  */
 import { jsPDF } from 'jspdf'
 import 'jspdf-autotable'
-import { NotoSansJPBase64 } from '@/assets/fonts/NotoSansJP.js'
+// フォントはdynamic importでPDF生成時のみ読み込む（バンドルサイズ削減）
 
 /**
  * 西暦年を和暦に変換
@@ -53,7 +53,8 @@ function expandRecordsToDailyTotals(records, year, month) {
 /**
  * jsPDFに日本語フォントを登録
  */
-function registerJapaneseFont(doc) {
+async function registerJapaneseFont(doc) {
+  const { NotoSansJPBase64 } = await import('@/assets/fonts/NotoSansJP.js')
   doc.addFileToVFS('NotoSansJP-Regular.ttf', NotoSansJPBase64)
   doc.addFont('NotoSansJP-Regular.ttf', 'NotoSansJP', 'normal')
   doc.setFont('NotoSansJP')
@@ -65,7 +66,7 @@ function registerJapaneseFont(doc) {
 export async function generateMonthlyReportPDF({ facilityName, months }) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
 
-  registerJapaneseFont(doc)
+  await registerJapaneseFont(doc)
 
   const pageWidth = 210
   const marginLeft = 10
