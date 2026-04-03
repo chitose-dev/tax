@@ -4,16 +4,15 @@
  */
 import { jsPDF } from 'jspdf'
 import 'jspdf-autotable'
+import { NotoSansJPBase64 } from '@/assets/fonts/NotoSansJP.js'
 
 /**
  * 西暦年を和暦に変換
  */
 function toWareki(year, month) {
-  // 令和: 2019年5月〜
   if (year > 2019 || (year === 2019 && month >= 5)) {
     return `令和${year - 2018}年${month}月分`
   }
-  // 平成: 1989年1月〜2019年4月
   if (year > 1989 || (year === 1989 && month >= 1)) {
     return `平成${year - 1988}年${month}月分`
   }
@@ -22,10 +21,6 @@ function toWareki(year, month) {
 
 /**
  * 宿泊レコードを日別の課税対象宿泊数に展開
- * @param {Array} records - lodgingRecords
- * @param {number} year - 対象年
- * @param {number} month - 対象月 (1-12)
- * @returns {Object} { dayTotals: {1: N, 2: N, ...}, total: N }
  */
 function expandRecordsToDailyTotals(records, year, month) {
   const daysInMonth = new Date(year, month, 0).getDate()
@@ -37,7 +32,6 @@ function expandRecordsToDailyTotals(records, year, month) {
     const co = new Date(rec.checkOutDate)
     const taxablePersons = (Number(rec.adults) || 0) + (Number(rec.children) || 0)
 
-    // チェックイン日からチェックアウト前日まで1泊ずつカウント
     const current = new Date(ci)
     while (current < co) {
       const cy = current.getFullYear()
@@ -57,19 +51,23 @@ function expandRecordsToDailyTotals(records, year, month) {
 }
 
 /**
+ * jsPDFに日本語フォントを登録
+ */
+function registerJapaneseFont(doc) {
+  doc.addFileToVFS('NotoSansJP-Regular.ttf', NotoSansJPBase64)
+  doc.addFont('NotoSansJP-Regular.ttf', 'NotoSansJP', 'normal')
+  doc.setFont('NotoSansJP')
+}
+
+/**
  * 月計表PDFを生成してダウンロード
- * @param {Object} params
- * @param {string} params.facilityName - 施設名
- * @param {Array<{year: number, month: number, records: Array}>} params.months - 月データ（1〜3ヶ月分）
  */
 export async function generateMonthlyReportPDF({ facilityName, months }) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
 
-  // フォント設定（組み込みフォントを使用）
-  doc.setFont('helvetica')
+  registerJapaneseFont(doc)
 
   const pageWidth = 210
-  const pageHeight = 297
   const marginLeft = 10
   const marginRight = 10
   const marginTop = 15
@@ -77,7 +75,7 @@ export async function generateMonthlyReportPDF({ facilityName, months }) {
 
   // タイトル
   doc.setFontSize(16)
-  doc.text('Lodging Tax Monthly Report', pageWidth / 2, marginTop, { align: 'center' })
+  doc.text('宿 泊 税 月 計 表', pageWidth / 2, marginTop, { align: 'center' })
 
   // 施設名
   doc.setFontSize(10)
@@ -96,7 +94,6 @@ export async function generateMonthlyReportPDF({ facilityName, months }) {
         daysInMonth,
       })
     } else {
-      // 空列
       columnData.push({
         header: '',
         dayTotals: {},
@@ -106,15 +103,10 @@ export async function generateMonthlyReportPDF({ facilityName, months }) {
     }
   }
 
-  // テーブルヘッダー構築
-  const head = [
-    columnData.map(c => ({ content: c.header || '', colSpan: 2, styles: { halign: 'center', fontStyle: 'bold' } })).flat(),
-  ]
-
-  // サブヘッダー
+  // サブヘッダー（日付 / 宿泊数）
   const subHead = []
   for (let i = 0; i < 3; i++) {
-    subHead.push('Day', 'Stays')
+    subHead.push('日付', '宿泊数（泊）')
   }
 
   // テーブルボディ構築（31行）
@@ -138,7 +130,7 @@ export async function generateMonthlyReportPDF({ facilityName, months }) {
   const totalRow = []
   for (let col = 0; col < 3; col++) {
     const cd = columnData[col]
-    totalRow.push('Total')
+    totalRow.push('合 計')
     totalRow.push(cd.total !== null ? String(cd.total) : '')
   }
   body.push(totalRow)
@@ -156,6 +148,7 @@ export async function generateMonthlyReportPDF({ facilityName, months }) {
       fontSize: 8,
       cellPadding: 1.5,
       halign: 'center',
+      font: 'NotoSansJP',
       lineColor: [0, 0, 0],
       lineWidth: 0.2,
     },
@@ -163,6 +156,7 @@ export async function generateMonthlyReportPDF({ facilityName, months }) {
       fillColor: [220, 220, 220],
       textColor: [0, 0, 0],
       fontStyle: 'bold',
+      font: 'NotoSansJP',
     },
     columnStyles: {
       0: { cellWidth: colWidth, halign: 'center' },
@@ -173,13 +167,11 @@ export async function generateMonthlyReportPDF({ facilityName, months }) {
       5: { cellWidth: colWidth, halign: 'right' },
     },
     didParseCell(data) {
-      // 合計行のスタイル
       if (data.row.index === body.length - 1) {
         data.cell.styles.fontStyle = 'bold'
         data.cell.styles.fillColor = [240, 240, 240]
       }
     },
-    // ヘッダーの上にカラムヘッダー（月名）を追加描画
     didDrawPage(data) {
       const tableStartY = data.settings.startY
       const headerHeight = 7
@@ -188,7 +180,7 @@ export async function generateMonthlyReportPDF({ facilityName, months }) {
       doc.setDrawColor(0, 0, 0)
       doc.setLineWidth(0.2)
       doc.setFontSize(9)
-      doc.setFont('helvetica', 'bold')
+      doc.setFont('NotoSansJP', 'normal')
 
       for (let i = 0; i < 3; i++) {
         const x = marginLeft + i * colWidth * 2
@@ -200,16 +192,15 @@ export async function generateMonthlyReportPDF({ facilityName, months }) {
         doc.text(columnData[i].header || '', x + w / 2, y + headerHeight / 2 + 1, { align: 'center' })
       }
 
-      // テーブル開始位置を調整
       data.settings.startY = tableStartY
     },
   })
 
-  // ファイル名
+  // ファイル名（日本語）
   const firstMonth = months[0]
   const filename = months.length > 1
-    ? `monthly_report_${firstMonth.year}_Q.pdf`
-    : `monthly_report_${firstMonth.year}_${String(firstMonth.month).padStart(2, '0')}.pdf`
+    ? `月計表_${firstMonth.year}_Q.pdf`
+    : `月計表_${firstMonth.year}${String(firstMonth.month).padStart(2, '0')}.pdf`
 
   doc.save(filename)
 }
