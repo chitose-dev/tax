@@ -73,13 +73,7 @@ export async function generateMonthlyReportPDF({ facilityName, months }) {
   const marginTop = 15
   const contentWidth = pageWidth - marginLeft - marginRight
 
-  // タイトル
-  doc.setFontSize(16)
-  doc.text('宿 泊 税 月 計 表', pageWidth / 2, marginTop, { align: 'center' })
-
-  // 施設名
-  doc.setFontSize(10)
-  doc.text(facilityName, pageWidth / 2, marginTop + 8, { align: 'center' })
+  // タイトル・施設名はdidDrawPage内で描画（ヘッダーバーの上に表示するため）
 
   // 3列分のデータを準備
   const columnData = []
@@ -192,6 +186,13 @@ export async function generateMonthlyReportPDF({ facilityName, months }) {
         doc.setTextColor(0, 0, 0)
         doc.text(columnData[i].header || '', x + w / 2, y + headerHeight / 2 + 1, { align: 'center' })
       }
+
+      // タイトル・施設名をヘッダーバーの上に描画
+      doc.setFontSize(16)
+      doc.setTextColor(0, 0, 0)
+      doc.text('宿 泊 税 月 計 表', pageWidth / 2, marginTop, { align: 'center' })
+      doc.setFontSize(10)
+      doc.text(facilityName, pageWidth / 2, marginTop + 8, { align: 'center' })
 
       data.settings.startY = tableStartY
     },
