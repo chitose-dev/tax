@@ -3,10 +3,13 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useSummaryStore } from '@/stores/summary'
 import { useMasterStore } from '@/stores/master'
+import { useImportStore } from '@/stores/import'
+import { generateMonthlyReportPDF } from '@/lib/monthly-report'
 
 const authStore = useAuthStore()
 const summaryStore = useSummaryStore()
 const masterStore = useMasterStore()
+const importStore = useImportStore()
 
 const selectedClientId = ref(authStore.clientId || masterStore.clients[0]?.id || '')
 
@@ -203,6 +206,36 @@ async function downloadCSV(summary) {
     createdBy: authStore.user?.uid || 'user-1'
   })
 }
+
+async function downloadMonthlyReportPDF(summary) {
+  try {
+    const facility = masterStore.facilities.find(f => f.id === summary.facilityId)
+    const facilityName = facility?.facilityName || ''
+
+    // 対象月のリストを構築
+    let yearMonths = []
+    if (summary.periodType === 'quarterly' && summary.yearQuarter) {
+      yearMonths = getQuarterMonths(summary.yearQuarter)
+    } else if (summary.yearMonth) {
+      yearMonths = [summary.yearMonth]
+    }
+
+    // 各月の宿泊レコードを取得して展開
+    const months = []
+    for (const ym of yearMonths) {
+      const [y, m] = ym.split('-').map(Number)
+      const records = await importStore.getRecordsByFilter(
+        summary.clientId, summary.facilityId, ym
+      )
+      months.push({ year: y, month: m, records })
+    }
+
+    await generateMonthlyReportPDF({ facilityName, months })
+  } catch (err) {
+    console.error('[ExportView] PDF generation error:', err)
+    alert('PDF生成に失敗しました: ' + err.message)
+  }
+}
 </script>
 
 <template>
@@ -251,6 +284,9 @@ async function downloadCSV(summary) {
                 <span v-if="hasDuplicateExportWarning(s)" style="color:var(--warning-color,#f39c12);font-size:0.85em;margin-right:6px" title="同期間の月次集計が既に出力済みです。二重申告にご注意ください。">⚠️ 月次出力済</span>
                 <button class="btn-primary btn-sm" @click="downloadCSV(s)">
                   {{ s.status === 'exported' ? '再ダウンロード' : 'CSV出力' }}
+                </button>
+                <button class="btn-primary btn-sm" style="margin-left:4px;background:var(--secondary-color,#6c757d)" @click="downloadMonthlyReportPDF(s)">
+                  月計表PDF
                 </button>
               </td>
             </tr>
