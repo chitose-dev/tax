@@ -69,7 +69,7 @@ async function registerJapaneseFont(doc) {
 /**
  * 月計表PDFを生成してダウンロード
  */
-export async function generateMonthlyReportPDF({ facilityName, months }) {
+export async function generateMonthlyReportPDF({ facilityName, facilityCode, clientCode, clientName, months }) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
 
   await registerJapaneseFont(doc)
@@ -87,7 +87,41 @@ export async function generateMonthlyReportPDF({ facilityName, months }) {
   const dayColWidth = 10
   const dataColWidth = (monthWidth - dayColWidth) / 3
 
-  // タイトル・施設名はdidDrawPage内で描画（ヘッダーバーの上に表示するため）
+  // タイトル
+  doc.setFontSize(14)
+  doc.setTextColor(0, 0, 0)
+  doc.text('宿 泊 税 計 表', pageWidth / 2, marginTop, { align: 'center' })
+
+  // 施設情報テーブル（公式月計表形式）
+  const infoTableY = marginTop + 4
+  autoTable(doc, {
+    startY: infoTableY,
+    margin: { left: marginLeft, right: marginRight },
+    head: [['宿泊施設名称', '施設番号 - 施設連番', '義務者番号', '特別徴収義務書']],
+    body: [[facilityName || '', facilityCode || '', clientCode || '', clientName || '']],
+    theme: 'grid',
+    styles: {
+      fontSize: 7,
+      cellPadding: 1.5,
+      halign: 'center',
+      lineColor: [0, 0, 0],
+      lineWidth: 0.2,
+    },
+    headStyles: {
+      fillColor: [255, 255, 255],
+      textColor: [0, 0, 0],
+      fontStyle: 'bold',
+      minCellHeight: 5,
+    },
+    bodyStyles: {
+      minCellHeight: 6,
+    },
+    willDrawCell() {
+      doc.setFont('NotoSansJP', 'normal')
+    },
+  })
+
+  const infoTableEndY = doc.lastAutoTable.finalY
 
   // 3列分のデータを準備
   const columnData = []
@@ -168,7 +202,7 @@ export async function generateMonthlyReportPDF({ facilityName, months }) {
   body.push(grandTotalRow)
 
   // テーブル描画
-  const tableStartY = marginTop + 29
+  const tableStartY = infoTableEndY + 10
 
   // columnStyles: 各月の日付列=center, データ列=right
   const columnStyles = {}
@@ -248,13 +282,6 @@ export async function generateMonthlyReportPDF({ facilityName, months }) {
         doc.setTextColor(0, 0, 0)
         doc.text(columnData[i].header || '', x + w / 2, y + headerHeight / 2 + 1, { align: 'center' })
       }
-
-      // タイトル・施設名をヘッダーバーの上に描画
-      doc.setFontSize(14)
-      doc.setTextColor(0, 0, 0)
-      doc.text('宿 泊 税 月 計 表', pageWidth / 2, marginTop, { align: 'center' })
-      doc.setFontSize(9)
-      doc.text(facilityName, pageWidth / 2, marginTop + 7, { align: 'center' })
 
       data.settings.startY = startY
     },

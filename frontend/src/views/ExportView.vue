@@ -210,7 +210,11 @@ async function downloadCSV(summary) {
 async function downloadMonthlyReportPDF(summary) {
   try {
     const facility = masterStore.facilities.find(f => f.id === summary.facilityId)
+    const client = masterStore.clients.find(c => c.id === summary.clientId)
     const facilityName = facility?.facilityName || ''
+    const facilityCode = facility?.facilityCode || ''
+    const clientCode = client?.clientCode || ''
+    const clientName = client?.clientName || ''
 
     // 対象月のリストを構築
     let yearMonths = []
@@ -230,7 +234,7 @@ async function downloadMonthlyReportPDF(summary) {
       months.push({ year: y, month: m, records })
     }
 
-    await generateMonthlyReportPDF({ facilityName, months })
+    await generateMonthlyReportPDF({ facilityName, facilityCode, clientCode, clientName, months })
   } catch (err) {
     console.error('[ExportView] PDF generation error:', err)
     alert('PDF生成に失敗しました: ' + err.message)
