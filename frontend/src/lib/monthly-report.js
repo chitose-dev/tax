@@ -120,8 +120,8 @@ export async function generateMonthlyReportPDF({ facilityName, months }) {
   const subHead1 = []
   const subHead2 = []
   for (let i = 0; i < 3; i++) {
-    subHead1.push('日付', '宿泊数（泊）', '', '')
-    subHead2.push('', '課税対象', '課税対象外', { content: 'うち外国\n大使等\n課税免除', styles: { fontSize: 5.5 } })
+    subHead1.push('日付', '宿 泊 数（泊）', '', '')
+    subHead2.push('', '課税対象（A）', '課税対象外（B）', { content: 'うち外国\n大使等\n課税免除', styles: { fontSize: 5.5 } })
   }
 
   // テーブルボディ構築（31行）
@@ -133,8 +133,8 @@ export async function generateMonthlyReportPDF({ facilityName, months }) {
       if (day <= cd.daysInMonth) {
         row.push(String(day))
         row.push(cd.taxable[day] || '')
-        row.push(cd.nonTaxable[day] || '')
-        row.push('')  // 外国大使等課税免除（データなし）
+        row.push(cd.nonTaxable[day] || '0')
+        row.push('0')  // 外国大使等課税免除（データなし）
       } else {
         row.push('', '', '', '')
       }
