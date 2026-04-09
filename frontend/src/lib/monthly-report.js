@@ -166,7 +166,7 @@ export async function generateMonthlyReportPDF({ facilityName, facilityCode, cli
       const cd = columnData[col]
       if (day <= cd.daysInMonth) {
         row.push(String(day))
-        row.push(cd.taxable[day] || '')
+        row.push(cd.taxable[day] || '0')
         row.push(cd.nonTaxable[day] || '0')
         row.push('0')  // 外国大使等課税免除（データなし）
       } else {
