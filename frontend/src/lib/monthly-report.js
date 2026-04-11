@@ -145,7 +145,7 @@ export async function generateMonthlyReportPDF({ facilityName, facilityCode, cli
         nonTaxable: {},
         totalTaxable: null,
         totalNonTaxable: null,
-        daysInMonth: 31,
+        daysInMonth: 0,
       })
     }
   }
@@ -181,9 +181,9 @@ export async function generateMonthlyReportPDF({ facilityName, facilityCode, cli
   for (let col = 0; col < 3; col++) {
     const cd = columnData[col]
     totalRow.push('合 計')
-    totalRow.push(cd.totalTaxable !== null ? String(cd.totalTaxable) : '')
-    totalRow.push(cd.totalNonTaxable !== null ? String(cd.totalNonTaxable) : '')
-    totalRow.push('')  // 外国大使等
+    totalRow.push(typeof cd.totalTaxable === 'number' ? String(cd.totalTaxable) : '')
+    totalRow.push(typeof cd.totalNonTaxable === 'number' ? String(cd.totalNonTaxable) : '')
+    totalRow.push(typeof cd.totalTaxable === 'number' ? '0' : '')  // 外国大使等（データなしだが有効月なら0）
   }
   body.push(totalRow)
 
