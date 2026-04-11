@@ -42,13 +42,21 @@ const confirmedSummaries = computed(() =>
   )
 )
 
-// 四半期の構成月を算出
+// 四半期の構成月を算出（熊本市ルール: Q1=12,1,2月 / Q2=3,4,5月 / Q3=6,7,8月 / Q4=9,10,11月）
+// 注: Q1の12月は前年度
 function getQuarterMonths(yearQuarter) {
   if (!yearQuarter) return []
   const [y, qStr] = yearQuarter.split('-Q')
   const q = parseInt(qStr)
-  const start = (q - 1) * 3 + 1
-  return [0, 1, 2].map(i => `${y}-${String(start + i).padStart(2, '0')}`)
+  const year = parseInt(y)
+  const quarterMonths = {
+    1: [{ y: year - 1, m: 12 }, { y: year, m: 1 }, { y: year, m: 2 }],
+    2: [{ y: year, m: 3 }, { y: year, m: 4 }, { y: year, m: 5 }],
+    3: [{ y: year, m: 6 }, { y: year, m: 7 }, { y: year, m: 8 }],
+    4: [{ y: year, m: 9 }, { y: year, m: 10 }, { y: year, m: 11 }],
+  }
+  const months = quarterMonths[q] || []
+  return months.map(({ y, m }) => `${y}-${String(m).padStart(2, '0')}`)
 }
 
 // 二重計上警告: 同じ期間で月次exportedと四半期が共存
