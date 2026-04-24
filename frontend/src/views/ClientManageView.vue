@@ -53,14 +53,15 @@ async function deleteClient(client) {
       <div class="card-body" style="padding:0">
         <div class="table-wrapper">
           <table>
-            <thead><tr><th>コード</th><th>事業者名</th><th>代表者</th><th>電話</th><th>状態</th><th></th></tr></thead>
+            <thead><tr><th>コード</th><th>事業者名</th><th>URLパラメータ</th><th>代表者</th><th>電話</th><th>状態</th><th></th></tr></thead>
             <tbody>
               <tr v-if="masterStore.clients.length === 0">
-                <td colspan="6" class="empty-state">事業者が登録されていません</td>
+                <td colspan="7" class="empty-state">事業者が登録されていません</td>
               </tr>
               <tr v-for="c in masterStore.clients" :key="c.id">
                 <td>{{ c.clientCode || '-' }}</td>
                 <td>{{ c.clientName }}</td>
+                <td>{{ c.urlSlug || '-' }}</td>
                 <td>{{ c.representative || '-' }}</td>
                 <td>{{ c.phone || '-' }}</td>
                 <td><span :class="['badge', c.isActive ? 'badge-success' : 'badge-error']">{{ c.isActive ? '有効' : '無効' }}</span></td>
@@ -93,7 +94,7 @@ const ClientFormInline = {
   props: { client: Object },
   emits: ['save', 'close'],
   setup(props, { emit }) {
-    const form = ref({ clientCode: '', clientName: '', representative: '', address: '', postalCode: '', phone: '', email: '', corporateType: 1, corporateNumber: '', personalNumber: '', notes: '', isActive: true })
+    const form = ref({ clientCode: '', clientName: '', urlSlug: '', representative: '', address: '', postalCode: '', phone: '', email: '', corporateType: 1, corporateNumber: '', personalNumber: '', notes: '', isActive: true })
     const validationError = ref('')
     const postalLoading = ref(false)
     function onPostalInput() {
@@ -115,14 +116,24 @@ const ClientFormInline = {
       postalLoading.value = false
     }
     onMounted(() => {
-      if (props.client) form.value = { clientCode: props.client.clientCode||'', clientName: props.client.clientName||'', representative: props.client.representative||'', address: props.client.address||'', postalCode: props.client.postalCode||'', phone: props.client.phone||'', email: props.client.email||'', corporateType: props.client.corporateType ?? 1, corporateNumber: props.client.corporateNumber||'', personalNumber: props.client.personalNumber||'', notes: props.client.notes||'', isActive: props.client.isActive !== false }
+      if (props.client) form.value = { clientCode: props.client.clientCode||'', clientName: props.client.clientName||'', urlSlug: props.client.urlSlug||'', representative: props.client.representative||'', address: props.client.address||'', postalCode: props.client.postalCode||'', phone: props.client.phone||'', email: props.client.email||'', corporateType: props.client.corporateType ?? 1, corporateNumber: props.client.corporateNumber||'', personalNumber: props.client.personalNumber||'', notes: props.client.notes||'', isActive: props.client.isActive !== false }
     })
-    return { form, validationError, postalLoading, lookupAddress, onPostalInput, submit() { validationError.value = ''; if (!form.value.clientName?.trim()) { validationError.value = '事業者名は必須です（空白のみは不可）'; return } emit('save', { ...form.value }) } }
+    return { form, validationError, postalLoading, lookupAddress, onPostalInput, submit() {
+      validationError.value = ''
+      if (!form.value.clientName?.trim()) { validationError.value = '事業者名は必須です（空白のみは不可）'; return }
+      const slug = (form.value.urlSlug || '').trim()
+      if (slug && !/^[a-zA-Z0-9_-]{1,64}$/.test(slug)) {
+        validationError.value = 'URLパラメータは半角英数字・ハイフン・アンダースコアのみ（64文字以内）'
+        return
+      }
+      emit('save', { ...form.value, urlSlug: slug || null })
+    } }
   },
   template: `<form @submit.prevent="submit">
     <div v-if="validationError" style="color: var(--danger-color, #e74c3c); margin-bottom: 12px; font-size: 0.9em; padding: 8px 12px; background: #fef2f2; border-radius: 6px">{{ validationError }}</div>
     <div class="form-group"><label>事業者コード</label><input v-model="form.clientCode" maxlength="20" placeholder="後日設定可能" /></div>
     <div class="form-group"><label>事業者名 <span class="required">*</span></label><input v-model="form.clientName" required maxlength="100" /></div>
+    <div class="form-group"><label>URLパラメータ <span style="color:#888;font-weight:normal;font-size:0.85em">（例: suga → bands.jp/?client=suga）</span></label><input v-model="form.urlSlug" maxlength="64" placeholder="半角英数・ハイフン・アンダースコアのみ" /></div>
     <div class="form-group"><label>代表者名</label><input v-model="form.representative" maxlength="50" /></div>
     <div class="form-group"><label>郵便番号</label><div style="display:flex;gap:8px;align-items:center"><input v-model="form.postalCode" maxlength="7" placeholder="1234567" style="flex:1" @input="onPostalInput" /><button type="button" class="btn-secondary btn-sm" @click="lookupAddress" :disabled="postalLoading">{{ postalLoading ? '検索中...' : '住所検索' }}</button></div></div>
     <div class="form-group"><label>住所</label><input v-model="form.address" maxlength="200" /></div>

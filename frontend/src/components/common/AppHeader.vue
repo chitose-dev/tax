@@ -1,9 +1,11 @@
 <script setup>
 import { inject } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useTenantStore } from '@/stores/tenant'
 import { useRouter } from 'vue-router'
 
 const authStore = useAuthStore()
+const tenant = useTenantStore()
 const router = useRouter()
 const sidebarOpen = inject('sidebarOpen')
 
@@ -25,7 +27,7 @@ async function handleLogout() {
         <span class="hamburger-line"></span>
         <span class="hamburger-line"></span>
       </button>
-      <h1 class="header-title">宿泊税計算システム</h1>
+      <h1 class="header-title">{{ tenant.isAdminMode ? '宿泊税管理システム（管理者）' : (tenant.clientName ? `${tenant.clientName} 宿泊税管理システム` : '宿泊税管理システム') }}</h1>
     </div>
     <div class="header-right">
       <span class="header-user">{{ authStore.userProfile?.displayName }}</span>

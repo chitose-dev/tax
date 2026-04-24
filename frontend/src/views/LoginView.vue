@@ -1,26 +1,30 @@
 <script setup>
 import { ref, computed, nextTick, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useTenantStore } from '@/stores/tenant'
 import { useRouter, useRoute } from 'vue-router'
 
 const authStore = useAuthStore()
+const tenant = useTenantStore()
 const router = useRouter()
 const route = useRoute()
 
-// 認証済みなら即リダイレクト
-watch(() => authStore.isAuthenticated, (authenticated) => {
-  if (authenticated) {
-    const redirect = route.query.redirect || '/'
-    router.replace(redirect)
-  }
-}, { immediate: true })
+// 既に認証済みなら即リダイレクト（mount時のみ。ログイン成功後の遷移はhandleLoginが担当）
+if (authStore.isAuthenticated) {
+  const redirect = route.query.redirect || '/'
+  router.replace(redirect)
+}
 
 const useMock = import.meta.env.VITE_USE_MOCK === 'true'
 const email = ref(useMock ? 'admin@example.com' : '')
 const password = ref('')
 const validationErrors = ref({})
 const isLoading = ref(false)
-const loginAttempted = ref(false)
+const loginAttempted = ref(!!authStore.error)
+// router 由来のエラー（事業者整合性チェック失敗など）が後から入っても表示できるように監視
+watch(() => authStore.error, (e) => {
+  if (e) loginAttempted.value = true
+})
 
 // authStore.errorを直接監視してエラー表示
 const loginError = computed(() => {
@@ -41,6 +45,7 @@ async function handleLogin() {
   loginAttempted.value = true
   try {
     await authStore.login(email.value, password.value)
+    // 事業者整合チェックは router.beforeEach で実行される
     const redirect = route.query.redirect || '/'
     await router.replace(redirect)
   } catch (e) {
@@ -55,7 +60,7 @@ async function handleLogin() {
 <template>
   <div class="login-container">
     <div class="login-card">
-      <h1 class="login-title">宿泊税計算システム</h1>
+      <h1 class="login-title">{{ tenant.isAdminMode ? '宿泊税管理システム（管理者）' : (tenant.clientName ? `${tenant.clientName} 宿泊税管理システム` : '宿泊税管理システム') }}</h1>
       <div v-if="useMock" class="alert alert-info" style="margin-top:12px;font-size:12px">
         モック: admin@example.com で管理者、それ以外で一般ユーザーとしてログイン（パスワードは何でもOK）
       </div>
@@ -70,7 +75,8 @@ async function handleLogin() {
           <input id="password" v-model="password" type="password" placeholder="パスワード" autocomplete="current-password" />
           <span v-if="validationErrors.password" class="error-message">{{ validationErrors.password }}</span>
         </div>
-        <div v-if="loginError" class="alert alert-error" style="margin-top:12px">{{ loginError }}</div>
+        <div v-if="validationErrors.general" class="alert alert-error" style="margin-top:12px">{{ validationErrors.general }}</div>
+        <div v-else-if="loginError" class="alert alert-error" style="margin-top:12px">{{ loginError }}</div>
         <button type="submit" class="btn-primary" :disabled="isLoading" style="width:100%;margin-top:8px">
           <span v-if="isLoading">ログイン中...</span>
           <span v-else>ログイン</span>

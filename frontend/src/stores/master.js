@@ -61,12 +61,16 @@ export const useMasterStore = defineStore('master', () => {
   }
 
   // バックグラウンドリフレッシュ（awaitしない）
-  function _refreshInBackground() {
-    Promise.all([
-      _fetchAndCache('clients', '/clients'),
+  async function _refreshInBackground() {
+    // /clients は管理者限定のため、一般ユーザーでは呼ばない（無駄な403を防ぐ）
+    const { useAuthStore } = await import('@/stores/auth')
+    const isAdmin = useAuthStore().isAdmin
+    const tasks = [
       _fetchAndCache('facilities', '/facilities'),
       _fetchAndCache('rooms', '/rooms'),
-    ]).catch(e => console.error('Background refresh failed:', e))
+    ]
+    if (isAdmin) tasks.unshift(_fetchAndCache('clients', '/clients'))
+    Promise.all(tasks).catch(e => console.error('Background refresh failed:', e))
   }
 
   async function _fetchAndCache(key, endpoint) {
@@ -78,6 +82,8 @@ export const useMasterStore = defineStore('master', () => {
       else if (key === 'rooms') rooms.value = data
       _persistCache(key, data)
     } catch (e) {
+      // 認証/権限エラーは正常系（未ログイン or 一般ユーザーの一覧取得など）。ログを出さない
+      if (e?.status === 401 || e?.status === 403) return
       console.error(`Failed to fetch ${key}:`, e)
     }
   }
@@ -95,6 +101,9 @@ export const useMasterStore = defineStore('master', () => {
       const { api } = await import('@/lib/api')
       clients.value = await api.get('/clients')
       _persistCache('clients', clients.value)
+    } catch (e) {
+      // 一般ユーザーは /clients 一覧アクセス不可（403）。空配列のまま継続
+      if (e?.status !== 403) throw e
     } finally { isLoading.value = false }
   }
 

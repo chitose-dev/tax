@@ -150,10 +150,16 @@ export async function generateMonthlyReportPDF({ facilityName, facilityCode, cli
     }
   }
 
-  // サブヘッダー2段: 「宿泊数（泊）」と個別列名
+  // ヘッダー3段: 月名 / 「宿泊数（泊）」 / 個別列名
+  const monthHeader = []
   const subHead1 = []
   const subHead2 = []
   for (let i = 0; i < 3; i++) {
+    monthHeader.push({
+      content: columnData[i].header || '',
+      colSpan: 4,
+      styles: { halign: 'center', fillColor: [180, 180, 180], textColor: [0, 0, 0], fontStyle: 'bold' }
+    })
     subHead1.push('日付', '宿 泊 数（泊）', '', '')
     subHead2.push('', '課税対象（A）', '課税対象外（B）', { content: 'うち外国\n大使等\n課税免除', styles: { fontSize: 5.5 } })
   }
@@ -217,7 +223,7 @@ export async function generateMonthlyReportPDF({ facilityName, facilityCode, cli
   autoTable(doc, {
     startY: tableStartY,
     margin: { left: marginLeft, right: marginRight },
-    head: [subHead1, subHead2],
+    head: [monthHeader, subHead1, subHead2],
     body,
     theme: 'grid',
     styles: {
@@ -238,8 +244,8 @@ export async function generateMonthlyReportPDF({ facilityName, facilityCode, cli
     },
     columnStyles,
     didParseCell(data) {
-      // subHead1: 「宿泊数（泊）」セルを3列結合
-      if (data.section === 'head' && data.row.index === 0) {
+      // subHead1（head index 1）: 「宿泊数（泊）」セルを3列結合
+      if (data.section === 'head' && data.row.index === 1) {
         const colIdx = data.column.index % colsPerMonth
         if (colIdx === 1) {
           data.cell.colSpan = 3
@@ -261,29 +267,6 @@ export async function generateMonthlyReportPDF({ facilityName, facilityCode, cli
         data.cell.styles.fontStyle = 'bold'
         data.cell.styles.fillColor = [230, 230, 230]
       }
-    },
-    didDrawPage(data) {
-      const startY = data.settings.startY
-      const headerHeight = 7
-
-      // 月ヘッダーバー描画
-      doc.setFillColor(180, 180, 180)
-      doc.setDrawColor(0, 0, 0)
-      doc.setLineWidth(0.2)
-      doc.setFontSize(8)
-      doc.setFont('NotoSansJP', 'normal')
-
-      for (let i = 0; i < 3; i++) {
-        const x = marginLeft + i * monthWidth
-        const w = monthWidth
-        const y = startY - headerHeight
-
-        doc.rect(x, y, w, headerHeight, 'FD')
-        doc.setTextColor(0, 0, 0)
-        doc.text(columnData[i].header || '', x + w / 2, y + headerHeight / 2 + 1, { align: 'center' })
-      }
-
-      data.settings.startY = startY
     },
   })
 
