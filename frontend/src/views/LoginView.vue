@@ -60,7 +60,15 @@ async function handleLogin() {
 <template>
   <div class="login-container">
     <div class="login-card">
-      <h1 class="login-title">{{ tenant.isAdminMode ? '宿泊税管理システム（管理者）' : (tenant.clientName ? `${tenant.clientName} 宿泊税管理システム` : '宿泊税管理システム') }}</h1>
+      <h1 class="login-title">
+        <template v-if="tenant.isAdminMode">宿泊税管理システム（管理者）</template>
+        <template v-else-if="tenant.clientName">
+          <span class="login-client">{{ tenant.clientName }}</span>
+          <br>
+          <span class="login-system">宿泊税管理システム</span>
+        </template>
+        <template v-else>宿泊税管理システム</template>
+      </h1>
       <div v-if="useMock" class="alert alert-info" style="margin-top:12px;font-size:12px">
         モック: admin@example.com で管理者、それ以外で一般ユーザーとしてログイン（パスワードは何でもOK）
       </div>
