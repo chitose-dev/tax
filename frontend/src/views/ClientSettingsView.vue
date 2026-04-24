@@ -22,21 +22,26 @@ async function ensureClientLoaded() {
     loading.value = false
     return
   }
-  try {
-    await masterStore.fetchClients(true)
-    // fetchClientsで取得できなかった場合、個別に取得を試みる
-    if (!myClient.value) {
+  // 管理者は /clients 一覧から、一般ユーザーは /clients/{id} で自社のみ取得
+  if (authStore.isAdmin) {
+    try {
+      await masterStore.fetchClients(true)
+    } catch (e) {
+      console.error('Failed to load clients:', e)
+    }
+  }
+  if (!myClient.value) {
+    try {
       const { api } = await import('@/lib/api')
       const client = await api.get(`/clients/${authStore.clientId}`)
       if (client && !masterStore.clients.find(c => c.id === client.id)) {
         masterStore.clients.push(client)
       }
+    } catch (e) {
+      console.error('Failed to load client:', e)
     }
-  } catch (e) {
-    console.error('Failed to load client:', e)
-  } finally {
-    loading.value = false
   }
+  loading.value = false
 }
 
 onMounted(() => ensureClientLoaded())

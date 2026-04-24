@@ -29,6 +29,13 @@ async function request(method, path, { body, params, isFormData } = {}) {
   }
 
   const headers = await getAuthHeaders()
+
+  // 認証必須エンドポイント (/public/* 以外) でトークンが無ければ 401 を即throw（無駄な403を発生させない）
+  const isPublic = path.startsWith('/public/') || path === '/' || path === '/health'
+  if (!isPublic && !headers.Authorization) {
+    throw new ApiError('未認証', 401)
+  }
+
   const options = { method, headers }
 
   if (body) {
