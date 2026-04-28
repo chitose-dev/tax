@@ -207,6 +207,21 @@ export async function generateMonthlyReportPDF({ facilityName, facilityCode, cli
   }
   body.push(grandTotalRow)
 
+  // 合計税額行（税理士提出用：1人1泊あたり200円）
+  const TAX_RATE = 200
+  const taxAmountRow = []
+  for (let col = 0; col < 3; col++) {
+    const cd = columnData[col]
+    taxAmountRow.push('合計税額')
+    if (cd.totalTaxable !== null) {
+      const tax = cd.totalTaxable * TAX_RATE
+      taxAmountRow.push({ content: `¥${tax.toLocaleString()}`, colSpan: 3, styles: { halign: 'right' } })
+    } else {
+      taxAmountRow.push({ content: '', colSpan: 3 })
+    }
+  }
+  body.push(taxAmountRow)
+
   // テーブル描画
   const tableStartY = infoTableEndY + 10
 
@@ -254,8 +269,9 @@ export async function generateMonthlyReportPDF({ facilityName, facilityCode, cli
         }
       }
 
-      const totalRowIdx = body.length - 2
-      const grandTotalRowIdx = body.length - 1
+      const totalRowIdx = body.length - 3
+      const grandTotalRowIdx = body.length - 2
+      const taxAmountRowIdx = body.length - 1
 
       // 合計行スタイル
       if (data.section === 'body' && data.row.index === totalRowIdx) {
@@ -266,6 +282,11 @@ export async function generateMonthlyReportPDF({ facilityName, facilityCode, cli
       if (data.section === 'body' && data.row.index === grandTotalRowIdx) {
         data.cell.styles.fontStyle = 'bold'
         data.cell.styles.fillColor = [230, 230, 230]
+      }
+      // 合計税額行スタイル
+      if (data.section === 'body' && data.row.index === taxAmountRowIdx) {
+        data.cell.styles.fontStyle = 'bold'
+        data.cell.styles.fillColor = [220, 220, 220]
       }
     },
   })
