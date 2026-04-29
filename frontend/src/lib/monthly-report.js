@@ -97,7 +97,7 @@ export async function generateMonthlyReportPDF({ facilityName, facilityCode, cli
   autoTable(doc, {
     startY: infoTableY,
     margin: { left: marginLeft, right: marginRight },
-    head: [['宿泊施設名称', '施設番号 - 施設連番', '義務者番号', '特別徴収義務書']],
+    head: [['宿泊施設名称', '施設番号 - 施設連番', '義務者番号', '特別徴収義務者']],
     body: [[facilityName || '', facilityCode || '', clientCode || '', clientName || '']],
     theme: 'grid',
     styles: {
