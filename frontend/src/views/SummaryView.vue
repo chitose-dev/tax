@@ -101,12 +101,19 @@ const availableQuarters = computed(() => {
   })
 })
 
-// 四半期の構成月を取得
+// 四半期の構成月を取得（熊本市宿泊税特例: Q1=前年12,1,2月 / Q2=3,4,5月 / Q3=6,7,8月 / Q4=9,10,11月）
 function getQuarterMonths(yearQuarter) {
   const [y, qStr] = yearQuarter.split('-Q')
   const q = parseInt(qStr)
-  const start = (q - 1) * 3 + 1
-  return [0, 1, 2].map(i => `${y}-${String(start + i).padStart(2, '0')}`)
+  const year = parseInt(y)
+  const quarterMonths = {
+    1: [{ y: year - 1, m: 12 }, { y: year, m: 1 }, { y: year, m: 2 }],
+    2: [{ y: year, m: 3 }, { y: year, m: 4 }, { y: year, m: 5 }],
+    3: [{ y: year, m: 6 }, { y: year, m: 7 }, { y: year, m: 8 }],
+    4: [{ y: year, m: 9 }, { y: year, m: 10 }, { y: year, m: 11 }],
+  }
+  const months = quarterMonths[q] || []
+  return months.map(({ y, m }) => `${y}-${String(m).padStart(2, '0')}`)
 }
 
 // 集計結果を計算
