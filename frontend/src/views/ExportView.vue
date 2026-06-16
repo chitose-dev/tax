@@ -5,6 +5,7 @@ import { useSummaryStore } from '@/stores/summary'
 import { useMasterStore } from '@/stores/master'
 import { useImportStore } from '@/stores/import'
 import { generateMonthlyReportPDF } from '@/lib/monthly-report'
+import { getQuarterMonths as getQuarterMonthsForFacility } from '@/utils/quarter'
 
 const authStore = useAuthStore()
 const summaryStore = useSummaryStore()
@@ -42,27 +43,20 @@ const confirmedSummaries = computed(() =>
   )
 )
 
-// 四半期の構成月を算出（熊本市ルール: Q1=12,1,2月 / Q2=3,4,5月 / Q3=6,7,8月 / Q4=9,10,11月）
-// 注: Q1の12月は前年度
-function getQuarterMonths(yearQuarter) {
-  if (!yearQuarter) return []
-  const [y, qStr] = yearQuarter.split('-Q')
-  const q = parseInt(qStr)
-  const year = parseInt(y)
-  const quarterMonths = {
-    1: [{ y: year - 1, m: 12 }, { y: year, m: 1 }, { y: year, m: 2 }],
-    2: [{ y: year, m: 3 }, { y: year, m: 4 }, { y: year, m: 5 }],
-    3: [{ y: year, m: 6 }, { y: year, m: 7 }, { y: year, m: 8 }],
-    4: [{ y: year, m: 9 }, { y: year, m: 10 }, { y: year, m: 11 }],
-  }
-  const months = quarterMonths[q] || []
-  return months.map(({ y, m }) => `${y}-${String(m).padStart(2, '0')}`)
+// summary に対応する施設の quarterStartMonth を取得（無ければ熊本市デフォルト=12）
+function getQuarterStartMonthForSummary(summary) {
+  const facility = masterStore.facilities.find(f => f.id === summary.facilityId)
+  return facility?.quarterStartMonth ?? 12
+}
+
+function getQuarterMonths(yearQuarter, summary) {
+  return getQuarterMonthsForFacility(yearQuarter, getQuarterStartMonthForSummary(summary))
 }
 
 // 二重計上警告: 同じ期間で月次exportedと四半期が共存
 function hasDuplicateExportWarning(summary) {
   if (summary.periodType !== 'quarterly' || !summary.yearQuarter) return false
-  const months = getQuarterMonths(summary.yearQuarter)
+  const months = getQuarterMonths(summary.yearQuarter, summary)
   return months.some(ym =>
     summaryStore.summaries.some(s =>
       s.clientId === summary.clientId && s.facilityId === summary.facilityId &&
@@ -119,11 +113,11 @@ function generateEltaxCSV(summary, client, facility) {
     '',                                          // 7: 代理人納税者ID
     '',                                          // 8: 申告受付番号
     '',                                          // 9: 受付年月日
-    '43100',                                     // 10: 宛先【地方公共団体コード】
-    '001',                                       // 11: 宛先【税務事務所コード】
-    '熊本市長',                                  // 12: 宛先【長名】
+    facility?.municipalityCode || '43100',       // 10: 宛先【地方公共団体コード】
+    facility?.taxOfficeCode || '001',            // 11: 宛先【税務事務所コード】
+    facility?.municipalityChief || '熊本市長',   // 12: 宛先【長名】
     todayStr,                                    // 13: 提出年月日
-    facility?.facilityCode || client?.clientCode || '', // 14: 証票番号
+    facility?.taxpayerCode || facility?.facilityCode || client?.clientCode || '', // 14: 証票番号（自治体発行の義務者番号）
     client?.clientName || '',                    // 15: 氏名又は名称
     '',                                          // 16: 代表者氏名
     postalCode,                                  // 17: 郵便番号
@@ -140,7 +134,7 @@ function generateEltaxCSV(summary, client, facility) {
     facility?.phone || '',                       // 28: 施設電話番号
     yearMonth,                                   // 29: 納入税額－行為年月
     '宿泊税（定額）',                            // 30: 申告区分１
-    '200',                                       // 31: 申告区分１【税率】
+    String(facility?.taxRatePerPersonNight ?? 200), // 31: 申告区分１【税率】
     String(taxableNights),                       // 32: 申告区分１【宿泊数】
     String(taxAmount),                           // 33: 申告区分１【税額】
   ]
@@ -227,7 +221,7 @@ async function downloadMonthlyReportPDF(summary) {
     // 対象月のリストを構築
     let yearMonths = []
     if (summary.periodType === 'quarterly' && summary.yearQuarter) {
-      yearMonths = getQuarterMonths(summary.yearQuarter)
+      yearMonths = getQuarterMonths(summary.yearQuarter, summary)
     } else if (summary.yearMonth) {
       yearMonths = [summary.yearMonth]
     }
@@ -242,7 +236,11 @@ async function downloadMonthlyReportPDF(summary) {
       months.push({ year: y, month: m, records })
     }
 
-    await generateMonthlyReportPDF({ facilityName, facilityCode, clientCode, clientName, months })
+    await generateMonthlyReportPDF({
+      facilityName, facilityCode, clientCode, clientName, months,
+      taxpayerCode: facility?.taxpayerCode,
+      taxRatePerPersonNight: facility?.taxRatePerPersonNight,
+    })
   } catch (err) {
     console.error('[ExportView] PDF generation error:', err)
     alert('PDF生成に失敗しました: ' + err.message)

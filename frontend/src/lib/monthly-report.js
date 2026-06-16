@@ -69,7 +69,11 @@ async function registerJapaneseFont(doc) {
 /**
  * 月計表PDFを生成してダウンロード
  */
-export async function generateMonthlyReportPDF({ facilityName, facilityCode, clientCode, clientName, months }) {
+export async function generateMonthlyReportPDF({
+  facilityName, facilityCode, clientCode, clientName, months,
+  // 多自治体対応（任意。未指定なら従来通り clientCode/200円）
+  taxpayerCode, taxRatePerPersonNight,
+}) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
 
   await registerJapaneseFont(doc)
@@ -98,7 +102,7 @@ export async function generateMonthlyReportPDF({ facilityName, facilityCode, cli
     startY: infoTableY,
     margin: { left: marginLeft, right: marginRight },
     head: [['宿泊施設名称', '施設番号 - 施設連番', '義務者番号', '特別徴収義務者']],
-    body: [[facilityName || '', facilityCode || '', clientCode || '', clientName || '']],
+    body: [[facilityName || '', facilityCode || '', taxpayerCode || clientCode || '', clientName || '']],
     theme: 'grid',
     styles: {
       fontSize: 7,
@@ -207,8 +211,8 @@ export async function generateMonthlyReportPDF({ facilityName, facilityCode, cli
   }
   body.push(grandTotalRow)
 
-  // 合計税額行（税理士提出用：1人1泊あたり200円）
-  const TAX_RATE = 200
+  // 合計税額行（税理士提出用：1人1泊あたりの税率は施設マスタの設定値、無ければ200円）
+  const TAX_RATE = taxRatePerPersonNight ?? 200
   const taxAmountRow = []
   for (let col = 0; col < 3; col++) {
     const cd = columnData[col]
