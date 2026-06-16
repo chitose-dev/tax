@@ -5,13 +5,15 @@ import { useImportStore } from '@/stores/import'
 import { useSummaryStore } from '@/stores/summary'
 import { useMasterStore } from '@/stores/master'
 import { normalizeDateString } from '@/utils/csv-parser'
+import { getQuarterMonths as getQuarterMonthsForFacility } from '@/utils/quarter'
 
 const authStore = useAuthStore()
 const importStore = useImportStore()
 const summaryStore = useSummaryStore()
 const masterStore = useMasterStore()
 
-const TAX_RATE = 200
+const DEFAULT_TAX_RATE = 200
+const DEFAULT_QUARTER_START_MONTH = 12
 
 function getLastDayOfMonth(yearMonth) {
   const [y, m] = yearMonth.split('-').map(Number)
@@ -101,19 +103,9 @@ const availableQuarters = computed(() => {
   })
 })
 
-// 四半期の構成月を取得（熊本市宿泊税特例: Q1=前年12,1,2月 / Q2=3,4,5月 / Q3=6,7,8月 / Q4=9,10,11月）
-function getQuarterMonths(yearQuarter) {
-  const [y, qStr] = yearQuarter.split('-Q')
-  const q = parseInt(qStr)
-  const year = parseInt(y)
-  const quarterMonths = {
-    1: [{ y: year - 1, m: 12 }, { y: year, m: 1 }, { y: year, m: 2 }],
-    2: [{ y: year, m: 3 }, { y: year, m: 4 }, { y: year, m: 5 }],
-    3: [{ y: year, m: 6 }, { y: year, m: 7 }, { y: year, m: 8 }],
-    4: [{ y: year, m: 9 }, { y: year, m: 10 }, { y: year, m: 11 }],
-  }
-  const months = quarterMonths[q] || []
-  return months.map(({ y, m }) => `${y}-${String(m).padStart(2, '0')}`)
+// 四半期の構成月を取得（facility ごとの quarterStartMonth に従う）
+function getQuarterMonths(yearQuarter, quarterStartMonth = DEFAULT_QUARTER_START_MONTH) {
+  return getQuarterMonthsForFacility(yearQuarter, quarterStartMonth)
 }
 
 // 集計結果を計算
@@ -128,9 +120,12 @@ const calculatedSummaries = computed(() => {
     : allFacilitiesForSummary.value
 
   return facilities.map(facility => {
+    const facilityQuarterStartMonth = facility.quarterStartMonth ?? DEFAULT_QUARTER_START_MONTH
+    const facilityTaxRate = facility.taxRatePerPersonNight ?? DEFAULT_TAX_RATE
+
     let records
     if (isQuarterly) {
-      const months = getQuarterMonths(selectedQuarter.value)
+      const months = getQuarterMonths(selectedQuarter.value, facilityQuarterStartMonth)
       records = importStore.lodgingRecords.filter(r =>
         r.clientId === selectedClientId.value && r.facilityId === facility.id && months.includes(r.yearMonth)
       )
@@ -155,7 +150,7 @@ const calculatedSummaries = computed(() => {
     const totalInfants = records.reduce((s, r) => s + (r.infants || 0), 0)
     const totalNights = records.reduce((s, r) => s + getNights(r), 0)
     const taxablePersonNights = records.reduce((s, r) => s + ((r.adults || 0) + (r.children || 0)) * getNights(r), 0)
-    const taxAmount = taxablePersonNights * TAX_RATE
+    const taxAmount = taxablePersonNights * facilityTaxRate
 
     // 既存の集計状態を確認
     const existing = summaryStore.summaries.find(s => {
