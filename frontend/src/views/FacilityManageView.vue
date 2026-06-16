@@ -249,11 +249,30 @@ const FacilityFormInline = {
   props: { facility: Object, clients: Array, defaultClientId: String, lockClient: Boolean },
   emits: ['save', 'close'],
   setup(props, { emit }) {
-    const form = ref({ clientId: '', facilityCode: '', facilityName: '', roomCodePrefix: '', address: '', phone: '', capacity: null, notes: '', isActive: true })
+    const form = ref({
+      clientId: '', facilityCode: '', facilityName: '', roomCodePrefix: '',
+      address: '', phone: '', capacity: null, notes: '', isActive: true,
+      // 自治体・eLTAX情報
+      municipalityCode: '43100', municipalityName: '熊本市', municipalityChief: '熊本市長',
+      taxOfficeCode: '001', taxpayerCode: '',
+      taxRatePerPersonNight: 200, quarterStartMonth: 12,
+    })
     const validationError = ref('')
     onMounted(() => {
       if (props.facility) {
-        form.value = { clientId: props.facility.clientId||'', facilityCode: props.facility.facilityCode||'', facilityName: props.facility.facilityName||'', roomCodePrefix: props.facility.roomCodePrefix||'', address: props.facility.address||'', phone: props.facility.phone||'', capacity: props.facility.capacity??null, notes: props.facility.notes||'', isActive: props.facility.isActive !== false }
+        const f = props.facility
+        form.value = {
+          clientId: f.clientId || '', facilityCode: f.facilityCode || '', facilityName: f.facilityName || '',
+          roomCodePrefix: f.roomCodePrefix || '', address: f.address || '', phone: f.phone || '',
+          capacity: f.capacity ?? null, notes: f.notes || '', isActive: f.isActive !== false,
+          municipalityCode: f.municipalityCode || '43100',
+          municipalityName: f.municipalityName || '熊本市',
+          municipalityChief: f.municipalityChief || '熊本市長',
+          taxOfficeCode: f.taxOfficeCode || '001',
+          taxpayerCode: f.taxpayerCode || '',
+          taxRatePerPersonNight: f.taxRatePerPersonNight ?? 200,
+          quarterStartMonth: f.quarterStartMonth ?? 12,
+        }
       } else if (props.defaultClientId) {
         form.value.clientId = props.defaultClientId
       }
@@ -263,6 +282,12 @@ const FacilityFormInline = {
       if (!form.value.clientId) { validationError.value = '事業者を選択してください'; return }
       if (!form.value.facilityName?.trim()) { validationError.value = '施設名は必須です（空白のみは不可）'; return }
       if (!form.value.roomCodePrefix || form.value.roomCodePrefix.length !== 1) { validationError.value = 'プレフィックスは1文字で入力してください'; return }
+      if (form.value.quarterStartMonth < 1 || form.value.quarterStartMonth > 12) {
+        validationError.value = 'Q1開始月は1〜12で入力してください'; return
+      }
+      if (form.value.taxRatePerPersonNight < 0) {
+        validationError.value = '税率は0以上で入力してください'; return
+      }
       form.value.roomCodePrefix = form.value.roomCodePrefix.toUpperCase()
       // null/undefinedのオプショナルフィールドを除去（API 422防止）
       const data = {
@@ -270,7 +295,14 @@ const FacilityFormInline = {
         facilityCode: form.value.facilityCode || '',
         facilityName: form.value.facilityName,
         roomCodePrefix: form.value.roomCodePrefix,
-        isActive: form.value.isActive
+        isActive: form.value.isActive,
+        municipalityCode: form.value.municipalityCode || null,
+        municipalityName: form.value.municipalityName || null,
+        municipalityChief: form.value.municipalityChief || null,
+        taxOfficeCode: form.value.taxOfficeCode || null,
+        taxpayerCode: form.value.taxpayerCode || null,
+        taxRatePerPersonNight: Number(form.value.taxRatePerPersonNight),
+        quarterStartMonth: Number(form.value.quarterStartMonth),
       }
       if (form.value.address?.trim()) data.address = form.value.address
       if (form.value.phone?.trim()) data.phone = form.value.phone
@@ -289,6 +321,18 @@ const FacilityFormInline = {
     <div class="form-group"><label>収容人数</label><input :value="form.capacity" @input="form.capacity = $event.target.value === '' ? null : Number($event.target.value)" type="number" min="0" class="input-small" /></div>
     <div class="form-group"><label>備考</label><textarea v-model="form.notes" rows="2" maxlength="500"></textarea></div>
     <div class="form-group"><label class="checkbox"><input type="checkbox" v-model="form.isActive" />有効</label></div>
+
+    <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd" />
+    <h4 style="margin: 16px 0 12px; font-size: 14px; color: #555">自治体・eLTAX情報</h4>
+    <p class="form-hint" style="margin-bottom:12px">eLTAX CSV出力・月計表PDFに使用されます。施設の所在自治体の値を設定してください。</p>
+    <div class="form-group"><label>自治体コード</label><input v-model="form.municipalityCode" maxlength="6" placeholder="例: 43100" class="input-small" /><p class="form-hint">地方公共団体コード（5桁）</p></div>
+    <div class="form-group"><label>自治体名</label><input v-model="form.municipalityName" maxlength="50" placeholder="例: 熊本市" /></div>
+    <div class="form-group"><label>自治体長名</label><input v-model="form.municipalityChief" maxlength="50" placeholder="例: 熊本市長" /></div>
+    <div class="form-group"><label>税務事務所コード</label><input v-model="form.taxOfficeCode" maxlength="10" placeholder="例: 001" class="input-small" /></div>
+    <div class="form-group"><label>義務者番号</label><input v-model="form.taxpayerCode" maxlength="20" placeholder="自治体から発行された番号" /><p class="form-hint">自治体ごとに異なる事業者番号</p></div>
+    <div class="form-group"><label>税率（1人1泊あたり円）</label><input v-model.number="form.taxRatePerPersonNight" type="number" min="0" class="input-small" /></div>
+    <div class="form-group"><label>四半期Q1の開始月</label><input v-model.number="form.quarterStartMonth" type="number" min="1" max="12" class="input-small" /><p class="form-hint">熊本市=12（前年12月〜2月）／一般=1（1〜3月）／会計年度=4</p></div>
+
     <div class="modal-actions"><button type="button" class="btn-secondary" @click="$emit('close')">キャンセル</button><button type="submit" class="btn-primary">保存</button></div>
   </form>`
 }
