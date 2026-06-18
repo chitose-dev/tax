@@ -80,10 +80,15 @@ function getClientCode(clientId) {
 function getYearMonthForEltax(summary) {
   if (summary.yearMonth) return summary.yearMonth.replace('-', '')
   if (summary.yearQuarter) {
+    // 施設の quarterStartMonth に従って算出された実際の最終月を使う
+    const months = getQuarterMonths(summary.yearQuarter, summary)
+    if (months.length > 0) {
+      return months[months.length - 1].replace('-', '')
+    }
+    // フォールバック（旧ロジック）: 施設情報が取れない場合
     const [y, qStr] = summary.yearQuarter.split('-Q')
     const q = parseInt(qStr)
-    const lastMonth = q * 3
-    return `${y}${String(lastMonth).padStart(2, '0')}`
+    return `${y}${String(q * 3).padStart(2, '0')}`
   }
   return ''
 }
