@@ -5,7 +5,7 @@ import { useImportStore } from '@/stores/import'
 import { useSummaryStore } from '@/stores/summary'
 import { useMasterStore } from '@/stores/master'
 import { normalizeDateString } from '@/utils/csv-parser'
-import { getQuarterMonths as getQuarterMonthsForFacility } from '@/utils/quarter'
+import { getQuarterMonths as getQuarterMonthsForFacility, monthToQuarter as monthToQuarterUtil } from '@/utils/quarter'
 
 const authStore = useAuthStore()
 const importStore = useImportStore()
@@ -51,6 +51,11 @@ watch(() => masterStore.clients, (clients) => {
   }
 }, { immediate: true })
 
+// 施設変更時、選択中の四半期をリセット（quarterStartMonth が変わる可能性があるため）
+watch(selectedFacilityId, () => {
+  selectedQuarter.value = ''
+})
+
 // clientId変更時に宿泊レコード＋集計をフェッチ
 watch(selectedClientId, async (id) => {
   if (id) {
@@ -81,26 +86,36 @@ const availableMonths = computed(() => {
   return [...months].sort().reverse()
 })
 
-// 利用可能な四半期一覧（宿泊税特例: Q1=12,1,2月 / Q2=3,4,5月 / Q3=6,7,8月 / Q4=9,10,11月）
-function monthToQuarter(y, m) {
-  // 12月 → 翌年Q1, 1-2月 → Q1, 3-5月 → Q2, 6-8月 → Q3, 9-11月 → Q4
-  if (m === 12) return `${y + 1}-Q1`
-  if (m <= 2) return `${y}-Q1`
-  if (m <= 5) return `${y}-Q2`
-  if (m <= 8) return `${y}-Q3`
-  return `${y}-Q4`
+// 選択中の施設の quarterStartMonth（四半期モードは施設選択必須）
+const selectedFacilityQuarterStart = computed(() => {
+  if (!selectedFacilityId.value) return DEFAULT_QUARTER_START_MONTH
+  const f = allFacilitiesForSummary.value.find(f => f.id === selectedFacilityId.value)
+  return f?.quarterStartMonth ?? DEFAULT_QUARTER_START_MONTH
+})
+
+// 四半期表示ラベル（quarterStartMonth から動的計算）
+function buildQuarterLabel(yearQuarter, quarterStartMonth) {
+  const months = getQuarterMonthsForFacility(yearQuarter, quarterStartMonth)
+  if (months.length !== 3) return yearQuarter
+  const labelYear = yearQuarter.split('-Q')[0]
+  const qKey = yearQuarter.split('-Q')[1]
+  const mStrs = months.map(m => Number(m.split('-')[1]))
+  return `${labelYear}年 Q${qKey}(${mStrs[0]}月-${mStrs[2]}月)`
 }
-const quarterLabels = { Q1: '12月-2月', Q2: '3月-5月', Q3: '6月-8月', Q4: '9月-11月' }
+
+// 利用可能な四半期一覧（選択中施設の quarterStartMonth に従って計算）
 const availableQuarters = computed(() => {
+  const qStart = selectedFacilityQuarterStart.value
   const quarters = new Set()
   availableMonths.value.forEach(ym => {
     const [y, m] = ym.split('-').map(Number)
-    quarters.add(monthToQuarter(y, m))
+    const q = monthToQuarterUtil(y, m, qStart)
+    if (q) quarters.add(q)
   })
-  return [...quarters].sort().reverse().map(q => {
-    const qKey = q.split('-')[1]
-    return { value: q, label: q.split('-')[0] + '年 ' + quarterLabels[qKey] }
-  })
+  return [...quarters].sort().reverse().map(q => ({
+    value: q,
+    label: buildQuarterLabel(q, qStart),
+  }))
 })
 
 // 四半期の構成月を取得（facility ごとの quarterStartMonth に従う）
@@ -269,10 +284,11 @@ async function saveAndConfirm(item) {
           </div>
           <div v-if="periodType === 'quarterly'" class="form-group">
             <label>四半期</label>
-            <select v-model="selectedQuarter">
-              <option value="">選択してください</option>
+            <select v-model="selectedQuarter" :disabled="!selectedFacilityId">
+              <option value="">{{ selectedFacilityId ? '選択してください' : '先に施設を選択してください' }}</option>
               <option v-for="q in availableQuarters" :key="q.value" :value="q.value">{{ q.label }}</option>
             </select>
+            <p v-if="!selectedFacilityId" class="form-hint" style="margin-top:4px;color:var(--color-gray-600)">四半期の月範囲は施設ごとに異なるため、施設を選択してください</p>
           </div>
         </div>
       </div>
@@ -281,7 +297,7 @@ async function saveAndConfirm(item) {
     <!-- 集計結果 -->
     <div v-if="(selectedYearMonth || selectedQuarter) && calculatedSummaries.length > 0" class="card">
       <div class="card-header">
-        <h2>集計結果 - {{ periodType === 'quarterly' ? selectedQuarter.replace('-Q1', '年 Q1(12月-2月)').replace('-Q2', '年 Q2(3月-5月)').replace('-Q3', '年 Q3(6月-8月)').replace('-Q4', '年 Q4(9月-11月)') : selectedYearMonth }}</h2>
+        <h2>集計結果 - {{ periodType === 'quarterly' ? buildQuarterLabel(selectedQuarter, selectedFacilityQuarterStart) : selectedYearMonth }}</h2>
       </div>
       <div class="card-body" style="padding:0">
         <div class="table-wrapper">
